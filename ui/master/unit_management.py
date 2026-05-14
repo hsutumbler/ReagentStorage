@@ -37,13 +37,13 @@ class UnitManagementPage(BasePage):
         self.content_layout.addWidget(hint)
 
         headers = ["換算名稱", "入庫單位", "盤點單位", "出庫單位",
-                   "入庫→盤點", "入庫→出庫", "安全庫存", "操作"]
+                   "入庫→盤點", "入庫→出庫", "操作"]
         self.table = self.make_table(headers)
         # 此欄固定寬度，容納兩個按鈕
         self.table.horizontalHeader().setSectionResizeMode(
-            7, self.table.horizontalHeader().ResizeMode.Fixed
+            6, self.table.horizontalHeader().ResizeMode.Fixed
         )
-        self.table.setColumnWidth(7, 160)
+        self.table.setColumnWidth(6, 180)
         self.content_layout.addWidget(self.table)
 
         self._load_data()
@@ -95,15 +95,15 @@ class UnitManagementPage(BasePage):
             total_ratio = u["stock_to_count"] * u["count_to_issue"]
             for c_idx, val in enumerate([
                 u["unit_name"], u["stock_unit"], u["count_unit"], u["issue_unit"],
-                u["stock_to_count"], total_ratio, u["safety_stock"],
+                f"{float(u['stock_to_count']):.1f}", f"{float(total_ratio):.1f}",
             ]):
                 self.table.setItem(r, c_idx, QTableWidgetItem(str(val)))
             # 操作按鈕容器
             from PyQt6.QtWidgets import QWidget, QHBoxLayout
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(0, 0, 0, 0)
-            action_layout.setSpacing(10)
+            action_layout.setContentsMargins(10, 0, 10, 0)
+            action_layout.setSpacing(12)
 
             btn_edit = self.make_table_btn("修改", "primary")
             btn_edit.clicked.connect(lambda _, uid=u["unit_id"]: self._edit_unit(uid))
@@ -116,7 +116,7 @@ class UnitManagementPage(BasePage):
             action_layout.addWidget(btn_del)
             action_layout.addStretch()
 
-            self.table.setCellWidget(r, 7, action_widget)
+            self.table.setCellWidget(r, 6, action_widget)
 
     def _add_unit(self):
         dlg = UnitDialog(self)
@@ -125,11 +125,10 @@ class UnitManagementPage(BasePage):
             with DBContext() as (_, c):
                 # 1. 插入單位換算
                 c.execute(
-                    "INSERT INTO unit_conversions "
-                    "(unit_name,stock_unit,count_unit,issue_unit,stock_to_count,count_to_issue,safety_stock) "
-                    "VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                    "(unit_name,stock_unit,count_unit,issue_unit,stock_to_count,count_to_issue) "
+                    "VALUES (%s,%s,%s,%s,%s,%s)",
                     (d["unit_name"], d["stock_unit"], d["count_unit"],
-                     d["issue_unit"], d["stock_to_count"], d["count_to_issue"], d["safety_stock"]),
+                     d["issue_unit"], d["stock_to_count"], d["count_to_issue"]),
                 )
                 unit_id = c.lastrowid
                 
@@ -146,13 +145,16 @@ class UnitManagementPage(BasePage):
         if dlg.exec():
             d = dlg.get_data()
             with DBContext() as (_, c):
-                c.execute(
-                    "UPDATE unit_conversions SET unit_name=%s, stock_unit=%s, "
-                    "count_unit=%s, issue_unit=%s, stock_to_count=%s, count_to_issue=%s, safety_stock=%s "
-                    "WHERE unit_id=%s",
-                    (d["unit_name"], d["stock_unit"], d["count_unit"],
-                     d["issue_unit"], d["stock_to_count"], d["count_to_issue"], d["safety_stock"], unit_id),
-                )
+                sql = """
+                    UPDATE unit_conversions SET 
+                        unit_name=%s, stock_unit=%s, count_unit=%s, issue_unit=%s,
+                        stock_to_count=%s, count_to_issue=%s
+                    WHERE unit_id=%s
+                """
+                c.execute(sql, (
+                    d["unit_name"], d["stock_unit"], d["count_unit"],
+                    d["issue_unit"], d["stock_to_count"], d["count_to_issue"], unit_id
+                ))
                 # 再次同步：防止名稱修改後關聯跑掉
                 c.execute("UPDATE reagents SET unit_id=%s WHERE reagent_name=%s", (unit_id, d["unit_name"]))
                 
@@ -167,7 +169,7 @@ class UnitManagementPage(BasePage):
                 c.execute("DELETE FROM unit_conversions WHERE unit_id=%s", (unit_id,))
             self._load_data()
         except Exception as e:
-            self.warn(self, "刪除失敗", f"無法刪除該單位換算（可能已有試劑正在使用此單位）：\n{str(e)}")
+            self.warn( "刪除失敗", f"無法刪除該單位換算（可能已有試劑正在使用此單位）：\n{str(e)}")
 
 
 class UnitDialog(QDialog):
@@ -184,28 +186,16 @@ class UnitDialog(QDialog):
         self.f_stock = QLineEdit(unit["stock_unit"] if unit else "")
         self.f_count = QLineEdit(unit["count_unit"] if unit else "")
         self.f_issue = QLineEdit(unit["issue_unit"] if unit else "")
-        self.f_issue.textChanged.connect(self._update_unit_label)
-
-        self.f_c2i = QDoubleSpinBox()
-        self.f_c2i.setRange(0.0001, 99999)
-        self.f_c2i.setDecimals(4)
-        self.f_c2i.setValue(float(unit["count_to_issue"]) if unit else 1.0)
-
-        self.f_safety = QDoubleSpinBox()
-        self.f_safety.setRange(0, 999999)
-        self.f_safety.setValue(float(unit["safety_stock"]) if unit else 0.0)
-        self.lbl_safety_unit = QLabel(unit["issue_unit"] if unit else "")
-        self.lbl_safety_unit.setStyleSheet("color:#4a7aaa; font-weight:bold;")
 
         self.f_s2c = QDoubleSpinBox()
-        self.f_s2c.setRange(0.0001, 99999)
-        self.f_s2c.setDecimals(4)
+        self.f_s2c.setRange(0.1, 99999)
+        self.f_s2c.setDecimals(1)
         self.f_s2c.setValue(float(unit["stock_to_count"]) if unit else 1.0)
 
         # 改為顯示/輸入 入庫 -> 出庫 的總比值
         self.f_s2i = QDoubleSpinBox()
-        self.f_s2i.setRange(0.0001, 999999)
-        self.f_s2i.setDecimals(4)
+        self.f_s2i.setRange(0.1, 999999)
+        self.f_s2i.setDecimals(1)
         if unit:
             total = float(unit["stock_to_count"] * unit["count_to_issue"])
             self.f_s2i.setValue(total)
@@ -220,7 +210,7 @@ class UnitDialog(QDialog):
         completer.setFilterMode(__import__("PyQt6.QtCore").QtCore.Qt.MatchFlag.MatchContains)
         self.f_name.setCompleter(completer)
 
-        for w in [self.f_s2c, self.f_s2i, self.f_safety]:
+        for w in [self.f_s2c, self.f_s2i]:
             w.setStyleSheet(
                 "background:#1a2535; border:1px solid #2d4060; "
                 "border-radius:6px; color:#d0e8ff; padding:7px 10px;"
@@ -232,11 +222,6 @@ class UnitDialog(QDialog):
         form.addRow("出庫單位 *", self.f_issue)
         form.addRow("入庫→盤點比 *", self.f_s2c)
         form.addRow("入庫→出庫比 *", self.f_s2i)
-        
-        safety_row = QHBoxLayout()
-        safety_row.addWidget(self.f_safety)
-        safety_row.addWidget(self.lbl_safety_unit)
-        form.addRow("安全庫存", safety_row)
 
         btn_row = QHBoxLayout()
         btn_ok = QPushButton("儲存")
@@ -264,8 +249,4 @@ class UnitDialog(QDialog):
             "stock_to_count": self.f_s2c.value(),
             # 存回 DB 前換算回 count_to_issue
             "count_to_issue": self.f_s2i.value() / self.f_s2c.value() if self.f_s2c.value() != 0 else 0,
-            "safety_stock":   self.f_safety.value(),
         }
-
-    def _update_unit_label(self, text):
-        self.lbl_safety_unit.setText(text)

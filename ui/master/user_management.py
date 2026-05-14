@@ -32,7 +32,7 @@ class UserManagementPage(BasePage):
         self.table.horizontalHeader().setSectionResizeMode(
             4, self.table.horizontalHeader().ResizeMode.Fixed
         )
-        self.table.setColumnWidth(4, 160)
+        self.table.setColumnWidth(4, 180)
         self.content_layout.addWidget(self.table)
 
         self._load_data()
@@ -54,8 +54,8 @@ class UserManagementPage(BasePage):
             from PyQt6.QtWidgets import QWidget, QHBoxLayout
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(0, 0, 0, 0)
-            action_layout.setSpacing(10)
+            action_layout.setContentsMargins(10, 0, 10, 0)
+            action_layout.setSpacing(12)
 
             btn_edit = self.make_table_btn("修改", "primary")
             btn_edit.clicked.connect(lambda _, uid=u["user_id"], uu=u: self._edit_user(uid, uu))
@@ -97,7 +97,7 @@ class UserManagementPage(BasePage):
             AuthService.delete_user(user_id)
             self._load_data()
         except Exception as e:
-            self.warn(self, "刪除失敗", f"無法刪除該員工（可能已有相關的操作記錄）：\n{str(e)}")
+            self.warn( "刪除失敗", f"無法刪除該員工（可能已有相關的操作記錄）：\n{str(e)}")
 
 
 class UserDialog(QDialog):

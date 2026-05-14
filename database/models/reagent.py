@@ -8,10 +8,10 @@ class ReagentModel:
     @staticmethod
     def get_all(active_only=True) -> list[dict]:
         sql = """
-            SELECT DISTINCT r.*, v.vendor_name, d.dept_name, u.unit_name,
+            SELECT DISTINCT r.*, r.safety_stock as reagent_safety_stock, 
+                   v.vendor_name, d.dept_name, u.unit_name,
                    u.stock_unit, u.count_unit, u.issue_unit,
-                   u.stock_to_count, u.count_to_issue,
-                   u.safety_stock
+                   u.stock_to_count, u.count_to_issue
             FROM reagents r
             LEFT JOIN vendors v ON r.vendor_id = v.vendor_id
             LEFT JOIN departments d ON r.dept_id = d.dept_id
@@ -22,15 +22,20 @@ class ReagentModel:
         sql += " ORDER BY r.reagent_name"
         with DBContext() as (_, c):
             c.execute(sql)
-            return c.fetchall()
+            rows = c.fetchall()
+            # 確保字典中的 safety_stock 來自 reagent 表
+            for row in rows:
+                if "reagent_safety_stock" in row:
+                    row["safety_stock"] = row["reagent_safety_stock"]
+            return rows
 
     @staticmethod
     def get_by_id(reagent_id: int) -> dict | None:
         sql = """
-            SELECT r.*, v.vendor_name, d.dept_name, u.unit_name,
+            SELECT r.*, r.safety_stock as reagent_safety_stock,
+                   v.vendor_name, d.dept_name, u.unit_name,
                    u.stock_unit, u.count_unit, u.issue_unit,
-                   u.stock_to_count, u.count_to_issue,
-                   u.safety_stock
+                   u.stock_to_count, u.count_to_issue
             FROM reagents r
             LEFT JOIN vendors v ON r.vendor_id = v.vendor_id
             LEFT JOIN departments d ON r.dept_id = d.dept_id
@@ -39,14 +44,16 @@ class ReagentModel:
         """
         with DBContext() as (_, c):
             c.execute(sql, (reagent_id,))
-            return c.fetchone()
+            row = c.fetchone()
+            if row:
+                row["safety_stock"] = row["reagent_safety_stock"]
+            return row
 
     @staticmethod
     def get_by_vendor_dept(vendor_id: int, dept_id: int) -> list[dict]:
         """供訂單頁面使用：查詢特定廠商+組別的試劑。"""
         sql = """
-            SELECT r.*, u.count_unit, u.stock_to_count,
-                   u.safety_stock
+            SELECT r.*, r.safety_stock, u.count_unit, u.stock_unit, u.stock_to_count
             FROM reagents r
             LEFT JOIN unit_conversions u ON r.unit_id = u.unit_id
             WHERE r.vendor_id=%s AND r.dept_id=%s AND r.is_active=TRUE
@@ -58,32 +65,32 @@ class ReagentModel:
 
     @staticmethod
     def create(reagent_name, item_number, dept_id, storage_temp,
-               open_days, vendor_id, brand, unit_id=None) -> int:
+               open_days, vendor_id, brand, unit_id=None, safety_stock=0) -> int:
         with DBContext() as (_, c):
             c.execute(
                 "INSERT INTO reagents "
                 "(reagent_name, item_number, dept_id, storage_temp, "
-                " open_days, vendor_id, brand, unit_id) "
-                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                " open_days, vendor_id, brand, unit_id, safety_stock) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (reagent_name, item_number, dept_id, storage_temp,
-                 open_days, vendor_id, brand, unit_id),
+                 open_days, vendor_id, brand, unit_id, safety_stock),
             )
             return c.lastrowid
 
     @staticmethod
     def update(reagent_id, reagent_name, item_number, dept_id, storage_temp,
-               open_days, vendor_id, brand, unit_id=None) -> None:
+               open_days, vendor_id, brand, unit_id=None, safety_stock=0) -> None:
         with DBContext() as (_, c):
             sql = """
                 UPDATE reagents SET 
                     reagent_name=%s, item_number=%s, dept_id=%s, 
                     storage_temp=%s, open_days=%s, vendor_id=%s, 
-                    brand=%s, unit_id=%s
+                    brand=%s, unit_id=%s, safety_stock=%s
                 WHERE reagent_id=%s
             """
             c.execute(sql, (
                 reagent_name, item_number, dept_id, storage_temp,
-                open_days, vendor_id, brand, unit_id, reagent_id
+                open_days, vendor_id, brand, unit_id, safety_stock, reagent_id
             ))
 
     @staticmethod

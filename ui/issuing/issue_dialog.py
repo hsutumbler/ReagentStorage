@@ -133,16 +133,16 @@ class IssuePage(BasePage):
         # QR Code 掃描內容可能是 "RID|名稱|批號|效期|日期"（或「出|...」）
         rid = self._parse_rid(raw)
         if not rid:
-            self.warn(self, "格式錯誤", "無法解析條碼內容")
+            self.warn( "格式錯誤", "無法解析條碼內容")
             return
 
         item = InventoryModel.get_by_rid(rid)
         if not item:
-            self.warn(self, "查無資料", f"找不到 RID：{rid}")
+            self.warn( "查無資料", f"找不到 RID：{rid}")
             return
         if item["status"] != 0:
             status_map = {1: "已出庫", 2: "已調整刪除"}
-            self.warn(self, "狀態錯誤",
+            self.warn( "狀態錯誤",
                       f"此試劑已{status_map.get(item['status'], '異常')}，無法出庫")
             return
 
@@ -206,7 +206,7 @@ class IssuePage(BasePage):
 
     def _do_issue(self):
         if not self._current_item:
-            self.warn(self, "提示", "請先掃描試劑條碼")
+            self.warn( "提示", "請先掃描試劑條碼")
             return
 
         item = self._current_item
@@ -237,7 +237,7 @@ class IssuePage(BasePage):
             try:
                 print_issue_label_large(rid, name, lot, print_exp_str, today_str, self.user["name"])
             except Exception as e:
-                self.warn(self, "列印錯誤", f"一般標籤列印失敗：{str(e)}")
+                self.warn( "列印錯誤", f"一般標籤列印失敗：{str(e)}")
 
         # QR Code 緩衝列印邏輯
         if self.chk_qr.isChecked():
@@ -253,7 +253,7 @@ class IssuePage(BasePage):
                     print_issue_batch_qr([self._pending_qr, current_qr])
                     self._pending_qr = None
                 except Exception as e:
-                    self.warn(self, "列印錯誤", str(e))
+                    self.warn( "列印錯誤", str(e))
             else:
                 # 第一瓶，詢問是否等下一瓶
                 reply = self.confirm(self, "列印詢問", "是否有下一瓶 QR 要出庫？\n(點擊「是」將等待下一瓶併案列印，點擊「否」則立即印出單張)")
@@ -264,7 +264,7 @@ class IssuePage(BasePage):
                     try:
                         print_issue_label_qr(rid, name, lot, print_exp_str, today_str, self.user["name"])
                     except Exception as e:
-                        self.warn(self, "列印錯誤", str(e))
+                        self.warn( "列印錯誤", str(e))
 
         # 加入記錄表格
         r = self.table.rowCount()
@@ -288,7 +288,7 @@ class IssuePage(BasePage):
 
     def _show_preview(self):
         if not self._current_item:
-            self.warn(self, "提示", "請先掃描試劑條碼以進行預覽")
+            self.warn( "提示", "請先掃描試劑條碼以進行預覽")
             return
         
         item = self._current_item

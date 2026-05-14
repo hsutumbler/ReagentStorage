@@ -35,7 +35,7 @@ class VendorManagementPage(BasePage):
         self.table.horizontalHeader().setSectionResizeMode(
             5, self.table.horizontalHeader().ResizeMode.Fixed
         )
-        self.table.setColumnWidth(5, 160)
+        self.table.setColumnWidth(5, 180)
         self.content_layout.addWidget(self.table)
 
         self._load_data()
@@ -56,8 +56,8 @@ class VendorManagementPage(BasePage):
             from PyQt6.QtWidgets import QWidget, QHBoxLayout
             action_widget = QWidget()
             action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(0, 0, 0, 0)
-            action_layout.setSpacing(10)
+            action_layout.setContentsMargins(10, 0, 10, 0)
+            action_layout.setSpacing(12)
 
             btn_edit = self.make_table_btn("修改", "primary")
             btn_edit.clicked.connect(lambda _, vid=v["vendor_id"]: self._edit_vendor(vid))
@@ -95,7 +95,7 @@ class VendorManagementPage(BasePage):
             VendorModel.delete(vendor_id)
             self._load_data()
         except Exception as e:
-            self.warn(self, "刪除失敗", f"無法刪除該廠商（可能已有相關的試劑或訂單資料）：\n{str(e)}")
+            self.warn( "刪除失敗", f"無法刪除該廠商（可能已有相關的試劑或訂單資料）：\n{str(e)}")
 
 
 class VendorDialog(QDialog):

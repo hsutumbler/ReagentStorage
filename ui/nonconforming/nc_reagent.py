@@ -119,7 +119,7 @@ class NonConformingPage(BasePage):
         reason     = self.f_reason.toPlainText().strip()
 
         if not lot_number or not reason:
-            self.warn(self, "驗證", "批號與不合格原因為必填")
+            self.warn( "驗證", "批號與不合格原因為必填")
             return
 
         NonConformingModel.create(

@@ -141,10 +141,10 @@ class ManualReceivePage(BasePage):
         mode = self.cb_mode.currentData()
 
         if not reagent_id:
-            self.warn(self, "驗證", "請選擇試劑")
+            self.warn( "驗證", "請選擇試劑")
             return
         if not lot_number:
-            self.warn(self, "驗證", "請輸入批號")
+            self.warn( "驗證", "請輸入批號")
             return
         if expiry <= date.today():
             if not self.confirm(self, "效期警告", "穩定效期已過或為今日，確定要入庫嗎？"):
@@ -192,7 +192,7 @@ class ManualReceivePage(BasePage):
                         is_new_lot=(is_new_lot and idx == 0)
                     )
                 except Exception as e:
-                    self.warn(self, "列印錯誤", str(e))
+                    self.warn( "列印錯誤", str(e))
                     break
 
         if self.chk_print_qr.isChecked():
@@ -215,7 +215,7 @@ class ManualReceivePage(BasePage):
                 try:
                     print_receive_batch_qr(pair)
                 except Exception as e:
-                    self.warn(self, "列印錯誤", f"QR 批次列印失敗：{str(e)}")
+                    self.warn( "列印錯誤", f"QR 批次列印失敗：{str(e)}")
 
             # 剩下最後一瓶（單數）
             if qr_queue:
@@ -228,7 +228,7 @@ class ManualReceivePage(BasePage):
                     try:
                         print_receive_batch_qr([remaining])
                     except Exception as e:
-                        self.warn(self, "列印錯誤", str(e))
+                        self.warn( "列印錯誤", str(e))
 
         # 更新記錄表格
         mode_label = RECEIVE_MODES.get(mode, "")
@@ -247,7 +247,7 @@ class ManualReceivePage(BasePage):
     def _show_preview(self):
         reagent_id = self.cb_reagent.currentData()
         if not reagent_id:
-            self.warn(self, "驗證", "請先選擇試劑以進行預覽")
+            self.warn( "驗證", "請先選擇試劑以進行預覽")
             return
         
         reagent = ReagentModel.get_by_id(reagent_id)

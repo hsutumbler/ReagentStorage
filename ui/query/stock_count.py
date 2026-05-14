@@ -38,7 +38,7 @@ class StockCountPage(BasePage):
         row.addStretch()
         self.content_layout.addLayout(row)
 
-        headers = ["試劑名稱", "料號", "組別", "廠商", "目前庫存", "盤點單位"]
+        headers = ["試劑名稱", "料號", "組別", "廠商", "目前庫存", "安全庫存", "盤點單位"]
         self.table = self.make_table(headers)
         self.content_layout.addWidget(self.table)
 
@@ -57,12 +57,20 @@ class StockCountPage(BasePage):
             stock = InventoryModel.get_current_stock_count(rg["reagent_id"])
             s2c = float(rg.get("stock_to_count") or 1)
             stock_count = stock * s2c
-            unit = rg.get("count_unit") or "瓶"
+            stock_unit = rg.get("stock_unit") or "未設單位"
+            unit = rg.get("count_unit") or "未設單位"
+
+            # 安全庫存換算為盤點單位
+            safety_stock_base = float(rg.get("safety_stock") or 0)
+            safety_count = safety_stock_base * s2c
+            low = stock_count < safety_count and safety_count > 0
 
             for c_idx, val in enumerate([
                 rg["reagent_name"], rg["item_number"] or "",
                 rg["dept_name"], rg["vendor_name"],
-                f"{stock_count:.1f}", unit,
+                f"{stock_count:.1f}", f"{safety_count:.1f}", unit,
             ]):
                 item = QTableWidgetItem(str(val))
+                if low:
+                    item.setForeground(QColor("#e07820"))
                 self.table.setItem(r_idx, c_idx, item)

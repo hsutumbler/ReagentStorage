@@ -117,7 +117,7 @@ class BatchReceivePage(BasePage):
             return
         po = PurchaseOrderModel.get_by_code(code)
         if not po:
-            self.warn(self, "查無資料", f"找不到訂購單：{code}")
+            self.warn( "查無資料", f"找不到訂購單：{code}")
             return
 
         self._po = po
@@ -199,7 +199,7 @@ class BatchReceivePage(BasePage):
 
     def _do_batch_receive(self):
         if not self._po:
-            self.warn(self, "提示", "請先掃描訂購單條碼")
+            self.warn( "提示", "請先掃描訂購單條碼")
             return
 
         try:
@@ -226,7 +226,7 @@ class BatchReceivePage(BasePage):
                 c_lot = self.table.cellWidget(r, 4); e_lot = c_lot.findChild(QLineEdit)
                 lot_number = e_lot.text().strip() if e_lot else ""
                 if not lot_number:
-                    self.warn(self, "驗證", f"請填寫「{reagent_name}」的批號")
+                    self.warn( "驗證", f"請填寫「{reagent_name}」的批號")
                     return
 
                 c_de = self.table.cellWidget(r, 5); de = c_de.findChild(QDateEdit)
@@ -256,7 +256,7 @@ class BatchReceivePage(BasePage):
                         try:
                             print_receive_label_large(rid, reagent_name, lot_number, expiry_str, today_str)
                         except Exception as e:
-                            self.warn(self, "列印錯誤", f"一般標籤列印失敗：{str(e)}")
+                            self.warn( "列印錯誤", f"一般標籤列印失敗：{str(e)}")
 
                     if self.chk_qr.isChecked():
                         qr_print_queue.append({
@@ -272,7 +272,7 @@ class BatchReceivePage(BasePage):
                 try:
                     print_receive_batch_qr(qr_print_queue)
                 except Exception as e:
-                    self.warn(self, "列印錯誤", f"QR Code 批次列印失敗：{str(e)}")
+                    self.warn( "列印錯誤", f"QR Code 批次列印失敗：{str(e)}")
 
             if total > 0:
                 PurchaseOrderModel.set_status(self._po["po_id"], 2)
@@ -282,9 +282,9 @@ class BatchReceivePage(BasePage):
                 self.f_po_code.clear()
                 self.lbl_po_info.setText("")
             else:
-                self.warn(self, "提示", "未輸入任何入庫數量")
+                self.warn( "提示", "未輸入任何入庫數量")
 
         except Exception as e:
             import traceback
             error_details = traceback.format_exc()
-            self.warn(self, "系統錯誤", f"入庫過程中發生錯誤，請截圖給開發者：\n{str(e)}\n\n{error_details}")
+            self.warn( "系統錯誤", f"入庫過程中發生錯誤，請截圖給開發者：\n{str(e)}\n\n{error_details}")

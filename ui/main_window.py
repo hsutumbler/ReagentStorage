@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QFont, QCursor
-from config import APP_NAME
+from config import APP_NAME, DEFAULT_FONT
 from services.auth_service import AuthService
 
 from ui.dashboard                import DashboardPage
@@ -284,7 +284,7 @@ class MainWindow(QMainWindow):
         self.setStyleSheet("""
             /* ── 全域字型 ── */
             * {
-                font-family: 'PingFang TC', 'Heiti TC', 'Helvetica', 'Arial', sans-serif;
+                font-family: {DEFAULT_FONT};
             }
 
             QMainWindow, #content_area {

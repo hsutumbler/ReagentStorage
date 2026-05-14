@@ -48,13 +48,27 @@ class ReagentManagementPage(BasePage):
         self.content_layout.addLayout(filter_row)
 
         headers = ["試劑名稱", "料號", "組別", "廠商", "廠牌",
-                   "保存溫度", "開封天數", "操作"]
+                   "保存溫度", "開封天數", "安全庫存", "操作"]
         self.table = self.make_table(headers)
-        # 此欄固定寬度，容納兩個按鈕，給予更多空間避免重疊
-        self.table.horizontalHeader().setSectionResizeMode(
-            7, self.table.horizontalHeader().ResizeMode.Fixed
-        )
-        self.table.setColumnWidth(7, 180)
+        
+        # 允許左右拉霸 (當寬度超過時)
+        header = self.table.horizontalHeader()
+        # 先將所有欄位設為「依內容縮放」或「互動」，這樣總寬度才可能超過視窗
+        header.setSectionResizeMode(header.ResizeMode.Interactive)
+        
+        # 針對特定欄位進行優化
+        header.setSectionResizeMode(0, header.ResizeMode.Stretch) # 名稱自動伸展
+        self.table.setColumnWidth(0, 200) # 但至少給 200px
+        
+        # 其他欄位設定合適的寬度
+        widths = {1:100, 2:100, 3:120, 4:100, 5:120, 6:100, 7:100, 8:180}
+        for col, w in widths.items():
+            self.table.setColumnWidth(col, w)
+            if col == 8:
+                header.setSectionResizeMode(col, header.ResizeMode.Fixed)
+            else:
+                header.setSectionResizeMode(col, header.ResizeMode.Interactive)
+
         self.content_layout.addWidget(self.table)
 
         self._load_data()
@@ -109,10 +123,13 @@ class ReagentManagementPage(BasePage):
         self.table.setRowCount(0)
         for r, rg in enumerate(reagents):
             self.table.insertRow(r)
+            stock_unit = rg.get("stock_unit") or ""
+            safety_display = f"{float(rg.get('safety_stock') or 0):.1f} {stock_unit}"
+            
             for c_idx, val in enumerate([
                 rg["reagent_name"], rg["item_number"] or "", rg["dept_name"],
                 rg["vendor_name"], rg["brand"] or "", rg["storage_temp"] or "",
-                rg["open_days"] or "",
+                rg["open_days"] or "", safety_display
             ]):
                 self.table.setItem(r, c_idx, QTableWidgetItem(str(val)))
             # 操作按鈕容器
@@ -133,7 +150,7 @@ class ReagentManagementPage(BasePage):
             action_layout.addWidget(btn_del)
             action_layout.addStretch()
 
-            self.table.setCellWidget(r, 7, action_widget)
+            self.table.setCellWidget(r, 8, action_widget)
 
     def _add_reagent(self):
         dlg = ReagentDialog(self)
@@ -143,7 +160,7 @@ class ReagentManagementPage(BasePage):
                 ReagentModel.create(**d)
                 self._load_data()
             except Exception as e:
-                self.warn(self, "儲存失敗", f"無法新增試劑，請檢查資料是否正確：\n{str(e)}")
+                self.warn( "儲存失敗", f"無法新增試劑，請檢查資料是否正確：\n{str(e)}")
 
     def _edit_reagent(self, reagent_id: int):
         r = ReagentModel.get_by_id(reagent_id)
@@ -212,20 +229,36 @@ class ReagentDialog(QDialog):
         self.f_open_days.setRange(0, 3650)
         self.f_open_days.setValue(reagent["open_days"] or 0 if reagent else 0)
         
-        # 單位換算選單
+        # 單位換算選單 — 切換時更新安全庫存單位標籤
         self.cb_unit = QComboBox()
         self.cb_unit.addItem("-- 不設定 (手動輸入) --", None)
+        self._unit_map = {}  # unit_id -> unit data
         for u in UnitConversionModel.get_all():
             self.cb_unit.addItem(u["unit_name"], u["unit_id"])
+            self._unit_map[u["unit_id"]] = u
         if reagent:
             idx = self.cb_unit.findData(reagent["unit_id"])
             if idx >= 0: self.cb_unit.setCurrentIndex(idx)
 
-        for w in [self.f_open_days]:
+        # 安全庫存 (以入庫單位儲存)
+        self.f_safety = QDoubleSpinBox()
+        self.f_safety.setRange(0, 99999)
+        self.f_safety.setDecimals(1)
+        self.f_safety.setValue(float(reagent["safety_stock"] or 0) if reagent else 0)
+        self.lbl_safety_unit = QLabel("")
+        safety_row = QHBoxLayout()
+        safety_row.addWidget(self.f_safety)
+        safety_row.addWidget(self.lbl_safety_unit)
+
+        for w in [self.f_open_days, self.f_safety]:
             w.setStyleSheet(
                 "background:#1a2535; border:1px solid #2d4060; "
                 "border-radius:6px; color:#d0e8ff; padding:7px 10px;"
             )
+
+        # 切換換算設定時動態更新安全庫存的單位標籤
+        self.cb_unit.currentIndexChanged.connect(self._update_safety_unit_label)
+        self._update_safety_unit_label()
 
         form.addRow("試劑名稱 *", self.f_name)
         form.addRow("料號", self.f_item)
@@ -235,6 +268,7 @@ class ReagentDialog(QDialog):
         form.addRow("保存溫度", self.f_temp)
         form.addRow("開封天數（天）", self.f_open_days)
         form.addRow("單位換算設定", self.cb_unit)
+        form.addRow("安全庫存（入庫單位）", safety_row)
 
         btn_row = QHBoxLayout()
         btn_ok = QPushButton("儲存")
@@ -245,6 +279,17 @@ class ReagentDialog(QDialog):
         btn_row.addWidget(btn_ok)
         btn_row.addWidget(btn_cancel)
         form.addRow(btn_row)
+
+    def _update_safety_unit_label(self):
+        """切換換算設定時，動態更新安全庫存旁邊的單位名稱。"""
+        unit_id = self.cb_unit.currentData()
+        u = self._unit_map.get(unit_id)
+        if u:
+            self.lbl_safety_unit.setText(u["stock_unit"])
+            self.lbl_safety_unit.setStyleSheet("color:#7ea8c9; font-size:13px;")
+        else:
+            self.lbl_safety_unit.setText("（未設定換算）")
+            self.lbl_safety_unit.setStyleSheet("color:#506070; font-size:12px;")
 
     def _validate(self):
         if not self.f_name.text().strip():
@@ -268,4 +313,5 @@ class ReagentDialog(QDialog):
             "vendor_id":    self.cb_vendor.currentData(),
             "brand":        self.f_brand.text().strip() or None,
             "unit_id":      self.cb_unit.currentData(),
+            "safety_stock": self.f_safety.value(),
         }

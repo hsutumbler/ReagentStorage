@@ -95,7 +95,7 @@ class OrderQueryPage(BasePage):
             print_po_label(po["po_code"], po["vendor_name"])
             self.alert(self, "成功", f"標籤已送至 Zebra 印表機")
         except Exception as e:
-            self.warn(self, "列印失敗", str(e))
+            self.warn( "列印失敗", str(e))
 
     def _print_a4(self, po):
         filename, _ = QFileDialog.getSaveFileName(
@@ -109,4 +109,4 @@ class OrderQueryPage(BasePage):
                 # macOS 開啟 PDF
                 os.system(f"open '{filename}'")
             else:
-                self.warn(self, "失敗", "產生 PDF 時發生錯誤")
+                self.warn( "失敗", "產生 PDF 時發生錯誤")

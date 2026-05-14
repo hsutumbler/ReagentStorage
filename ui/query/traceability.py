@@ -138,7 +138,7 @@ class TraceabilityPage(BasePage):
 
     def _export_csv(self):
         if not self._last_results:
-            self.warn(self, "提示", "請先進行查詢再匯出資料")
+            self.warn( "提示", "請先進行查詢再匯出資料")
             return
 
         path, _ = QFileDialog.getSaveFileName(
@@ -162,4 +162,4 @@ class TraceabilityPage(BasePage):
                     ])
             self.alert(self, "匯出成功", f"資料已成功儲存至：\n{path}")
         except Exception as e:
-            self.warn(self, "匯出失敗", str(e))
+            self.warn( "匯出失敗", str(e))

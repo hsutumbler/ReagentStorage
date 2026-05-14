@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QRect
 from PyQt6.QtGui import QFont, QLinearGradient, QColor, QPainter, QPainterPath
 from services.auth_service import AuthService
-from config import APP_NAME, APP_VERSION
+from config import APP_NAME, APP_VERSION, DEFAULT_FONT
 
 
 class LoginWindow(QDialog):
@@ -121,14 +121,14 @@ class LoginWindow(QDialog):
                 color: #F1F5F9;
                 font-size: 20px;
                 font-weight: 700;
-                font-family: 'PingFang TC', 'Heiti TC', 'Helvetica', 'Arial', sans-serif;
+                font-family: {DEFAULT_FONT};
                 letter-spacing: 2px;
             }
 
             #brand_subtitle {
                 color: #475569;
                 font-size: 12px;
-                font-family: 'PingFang TC', 'Heiti TC', 'Helvetica', 'Arial', sans-serif;
+                font-family: {DEFAULT_FONT};
                 letter-spacing: 1px;
             }
 
@@ -136,7 +136,7 @@ class LoginWindow(QDialog):
                 color: #94A3B8;
                 font-size: 12px;
                 font-weight: 600;
-                font-family: 'PingFang TC', 'Heiti TC', 'Helvetica', 'Arial', sans-serif;
+                font-family: {DEFAULT_FONT};
                 letter-spacing: 1px;
             }
 
@@ -147,7 +147,7 @@ class LoginWindow(QDialog):
                 border-radius: 10px;
                 font-size: 15px;
                 font-weight: 700;
-                font-family: 'PingFang TC', 'Heiti TC', 'Helvetica', 'Arial', sans-serif;
+                font-family: {DEFAULT_FONT};
                 letter-spacing: 6px;
             }
             #btn_login:hover {
@@ -160,7 +160,7 @@ class LoginWindow(QDialog):
             #status_label {
                 color: #F87171;
                 font-size: 12px;
-                font-family: 'PingFang TC', 'Heiti TC', 'Helvetica', 'Arial', sans-serif;
+                font-family: {DEFAULT_FONT};
             }
 
             #version_label {
@@ -233,7 +233,7 @@ class _StyledInput(QLineEdit):
                 color: #E2E8F0;
                 font-size: 14px;
                 padding: 0 16px;
-                font-family: 'PingFang TC', 'Heiti TC', 'Helvetica', 'Arial', sans-serif;
+                font-family: {DEFAULT_FONT};
             }
             QLineEdit:focus {
                 border-color: #3B82F6;

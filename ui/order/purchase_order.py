@@ -94,24 +94,28 @@ class PurchaseOrderPage(BasePage):
 
         for r, rg in enumerate(self._reagents):
             self.table.insertRow(r)
-            self.table.setRowHeight(r, 45) # 顯式設定每一行的高度，避免被無視
-            stock_count = float(InventoryModel.get_current_stock_count(rg["reagent_id"]) or 0)
-            # 換算為盤點單位
+            self.table.setRowHeight(r, 45)
+            stock_raw = float(InventoryModel.get_current_stock_count(rg["reagent_id"]) or 0)
             s2c = float(rg.get("stock_to_count") or 1)
-            stock_in_count = stock_count * s2c
-            count_unit = rg.get("count_unit") or "瓶"
+            stock_unit = rg.get("stock_unit") or "未設單位"
+
+            # 安全庫存以「入庫單位」儲存於 reagents.safety_stock
+            safety_in_stock = float(rg.get("safety_stock") or 0)
+            # 目前庫存折算回入庫單位比較
+            stock_in_stock = stock_raw  # get_current_stock_count 已是入庫單位數量
+            low = stock_in_stock < safety_in_stock and safety_in_stock > 0
 
             for c_idx, val in enumerate([
                 rg["reagent_name"],
                 rg["item_number"] or "",
-                f"{rg['safety_stock'] or 0} {count_unit}",
-                f"{stock_in_count:.1f} {count_unit}",
+                f"{safety_in_stock:.1f} {stock_unit}",
+                f"{stock_raw:.1f} {stock_unit}",
             ]):
                 item = QTableWidgetItem(str(val))
                 item.setFlags(Qt.ItemFlag.ItemIsEnabled)
-                # 安全庫存不足，紅色提示
-                if c_idx == 3 and stock_in_count < float(rg["safety_stock"] or 0):
-                    item.setForeground(__import__("PyQt6.QtGui", fromlist=["QColor"]).QColor("#e05555"))
+                # 目前庫存不足安全庫存，橘色提示
+                if c_idx == 3 and low:
+                    item.setForeground(__import__("PyQt6.QtGui", fromlist=["QColor"]).QColor("#e07820"))
                 self.table.setItem(r, c_idx, item)
 
             # 訂購數量（透過容器封裝實現絕對垂直置中）
@@ -135,7 +139,7 @@ class PurchaseOrderPage(BasePage):
 
     def _save_and_print(self):
         if not self._reagents:
-            self.warn(self, "提示", "請先載入試劑清單")
+            self.warn("提示", "請先載入試劑清單")
             return
 
         # 收集有訂購數量的項目
@@ -154,7 +158,7 @@ class PurchaseOrderPage(BasePage):
                         continue
 
         if not order_items:
-            self.warn(self, "提示", "請至少輸入一項訂購數量")
+            self.warn( "提示", "請至少輸入一項訂購數量")
             return
 
         vendor_id = self.cb_vendor.currentData()
@@ -216,4 +220,4 @@ class PurchaseOrderPage(BasePage):
         try:
             _send_zpl(zpl)
         except Exception as e:
-            self.warn(self, "列印錯誤", str(e))
+            self.warn( "列印錯誤", str(e))
