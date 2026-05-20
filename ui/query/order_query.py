@@ -15,7 +15,7 @@ from services.report_generator import ReportGenerator
 
 class OrderQueryPage(BasePage):
     def __init__(self, user: dict):
-        super().__init__("訂購單查詢", "查詢歷史訂購單", user)
+        super().__init__("試劑訂單查詢", "查詢歷史訂購單", user)
         self._build()
 
     def _build(self):
@@ -38,13 +38,13 @@ class OrderQueryPage(BasePage):
         self.f_from = QDateEdit()
         self.f_from.setCalendarPopup(True)
         self.f_from.setDate(QDate.currentDate().addMonths(-3))
-        self.f_from.setDisplayFormat("yyyy-MM-dd")
+        self.f_from.setDisplayFormat("yyyy / MM / dd")
         row.addWidget(self.f_from)
         row.addWidget(QLabel("至："))
         self.f_to = QDateEdit()
         self.f_to.setCalendarPopup(True)
         self.f_to.setDate(QDate.currentDate())
-        self.f_to.setDisplayFormat("yyyy-MM-dd")
+        self.f_to.setDisplayFormat("yyyy / MM / dd")
         row.addWidget(self.f_to)
 
         btn = QPushButton("查詢")
@@ -73,7 +73,7 @@ class OrderQueryPage(BasePage):
             self.table.insertRow(r)
             data = [
                 po["po_code"], po["vendor_name"], po["dept_name"],
-                po["creator_name"], str(po["created_at"]),
+                po["creator_name"], po["created_at"].strftime("%Y / %m / %d %H:%M"),
                 status_map.get(po["status"], "?"),
             ]
             for c_idx, val in enumerate(data):
@@ -93,7 +93,7 @@ class OrderQueryPage(BasePage):
     def _reprint_po(self, po):
         try:
             print_po_label(po["po_code"], po["vendor_name"])
-            self.alert(self, "成功", f"標籤已送至 Zebra 印表機")
+            self.alert("成功", f"標籤已送至 Zebra 印表機")
         except Exception as e:
             self.warn( "列印失敗", str(e))
 
@@ -104,7 +104,7 @@ class OrderQueryPage(BasePage):
         if filename:
             success = ReportGenerator.generate_po_pdf(po, filename)
             if success:
-                self.alert(self, "成功", f"訂購單 PDF 已儲存至：\n{filename}")
+                self.alert("成功", f"訂購單 PDF 已儲存至：\n{filename}")
                 import os
                 # macOS 開啟 PDF
                 os.system(f"open '{filename}'")

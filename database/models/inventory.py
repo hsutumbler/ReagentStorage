@@ -156,11 +156,15 @@ class InventoryModel:
                     status=None, issue_from=None, issue_to=None) -> list[dict]:
         """庫存追溯查詢（含過往出入庫記錄）。"""
         sql = """
-            SELECT i.*, r.reagent_name, v.vendor_name, d.dept_name
+            SELECT i.*, r.reagent_name, v.vendor_name, d.dept_name,
+                   u1.name AS received_by_name,
+                   u2.name AS issued_by_name
             FROM inventory i
             JOIN reagents r ON i.reagent_id = r.reagent_id
             JOIN vendors v ON r.vendor_id = v.vendor_id
             JOIN departments d ON r.dept_id = d.dept_id
+            LEFT JOIN users u1 ON i.received_by = u1.user_id
+            LEFT JOIN users u2 ON i.issued_by = u2.user_id
             WHERE 1=1
         """
         params = []

@@ -22,39 +22,39 @@ class CenterDelegate(QStyledItemDelegate):
 
 COLORS = {
     # 背景層次
-    "bg_base":    "#0A0F1E",   # 最底層
-    "bg_surface": "#0F1628",   # 卡片/面板
-    "bg_elevated":"#141E30",   # 浮出卡片
-    "bg_input":   "#0D1117",   # 輸入框
+    "bg_base":    "#F8F9FA",   # 最底層 (淺灰白)
+    "bg_surface": "#FFFFFF",   # 卡片/面板 (純白)
+    "bg_elevated":"#FFFFFF",   # 浮出卡片 (純白)
+    "bg_input":   "#FFFFFF",   # 輸入框 (純白)
 
     # 邊框
-    "border":     "#1A2540",
-    "border_focus":"#3B82F6",
+    "border":     "#DEE2E6",
+    "border_focus":"#0066CC",
 
     # 文字
-    "text_primary":  "#E2E8F0",
-    "text_secondary":"#94A3B8",
-    "text_muted":    "#475569",
-    "text_disabled": "#2D3748",
+    "text_primary":  "#2D3436",
+    "text_secondary":"#636E72",
+    "text_muted":    "#B2BEC3",
+    "text_disabled": "#DFE6E9",
 
     # 強調色
-    "accent":        "#3B82F6",   # blue-500
-    "accent_hover":  "#2563EB",   # blue-600
-    "accent_light":  "#1E3A8A",   # blue-900（選取背景）
+    "accent":        "#0066CC",   # 醫療藍
+    "accent_hover":  "#0055AA",   # 深醫療藍
+    "accent_light":  "#E6F0FF",   # 極淺藍（選取背景）
 
     # 功能色
-    "success":   "#10B981",
-    "warning":   "#F59E0B",
-    "danger":    "#EF4444",
-    "danger_bg": "#1C0A0A",
-    "danger_border": "#7F1D1D",
+    "success":   "#28A745",
+    "warning":   "#FF8C00",
+    "danger":    "#DC3545",
+    "danger_bg": "#FFF5F5",
+    "danger_border": "#FEB2B2",
 
     # 表格
-    "table_bg":    "#0D1117",
-    "table_alt":   "#0F1628",
-    "table_head":  "#111827",
-    "table_select":"#172554",
-    "grid":        "#1A2540",
+    "table_bg":    "#FFFFFF",
+    "table_alt":   "#FDFBF7",   # 米色交替
+    "table_head":  "#F1F3F5",
+    "table_select":"#E6F0FF",
+    "grid":        "#E2E8F0",
 }
 
 # ── 全域 QSS ──────────────────────────────────────────────
@@ -75,7 +75,7 @@ PAGE_STYLE = f"""
         letter-spacing: 0.5px;
     }}
     #page_subtitle {{
-        color: {COLORS['text_muted']};
+        color: {COLORS['text_primary']};
         font-size: 12px;
         letter-spacing: 0.5px;
     }}
@@ -114,30 +114,55 @@ PAGE_STYLE = f"""
     QLineEdit:focus, QComboBox:focus, QDateEdit:focus,
     QSpinBox:focus, QDoubleSpinBox:focus, QTextEdit:focus {{
         border-color: {COLORS['border_focus']};
-        background: #0C1422;
+        background: {COLORS['bg_surface']};
     }}
     QLineEdit::placeholder, QTextEdit::placeholder {{
-        color: {COLORS['text_disabled']};
+        color: #2D3436;
     }}
 
-    /* ── ComboBox ── */
-    QComboBox::drop-down {{
+    /* ── ComboBox & DateEdit 共通下拉 ── */
+    QComboBox::drop-down, QDateEdit::drop-down {{
         border: none;
-        width: 28px;
-        border-radius: 0 8px 8px 0;
+        width: 32px;
+        background: {COLORS['bg_base']};
+        border-left: 1px solid {COLORS['border']};
+        border-top-right-radius: 8px;
+        border-bottom-right-radius: 8px;
     }}
-    QComboBox::down-arrow {{
+    QComboBox::down-arrow, QDateEdit::down-arrow {{
         width: 12px;
         height: 12px;
     }}
+
+    /* ── ComboBox 特有 ── */
+    QComboBox {{
+        combobox-popup: 0;
+    }}
+    QComboBox QFrame {{
+        background: transparent;
+        border: none;
+    }}
     QComboBox QAbstractItemView {{
-        background: {COLORS['bg_elevated']};
-        border: 1px solid {COLORS['border']};
-        border-radius: 6px;
-        color: {COLORS['text_primary']};
-        selection-background-color: {COLORS['accent_light']};
-        selection-color: {COLORS['accent']};
+        background: transparent;
+        border: none;
         outline: none;
+    }}
+    QComboBox QListView {{
+        background-color: #FFFFFF;
+        border: 1px solid {COLORS['border']};
+        border-radius: 8px;
+        outline: none;
+    }}
+    QComboBox QAbstractItemView::item {{
+        min-height: 36px;
+        padding-left: 10px;
+        color: {COLORS['text_primary']};
+        border-radius: 4px;
+        margin: 2px 4px;
+    }}
+    QComboBox QAbstractItemView::item:selected {{
+        background-color: {COLORS['accent_light']};
+        color: {COLORS['accent']};
     }}
 
     /* ── SpinBox ── */
@@ -171,12 +196,12 @@ PAGE_STYLE = f"""
         min-height: 34px;
     }}
     QPushButton:hover {{
-        background: #1A2540;
+        background: #E9ECEF;
         color: {COLORS['text_primary']};
-        border-color: #2A3A56;
+        border-color: {COLORS['accent']};
     }}
     QPushButton:pressed {{
-        background: #111928;
+        background: #DEE2E6;
     }}
     QPushButton:disabled {{
         color: {COLORS['text_disabled']};
@@ -205,20 +230,20 @@ PAGE_STYLE = f"""
         border: 1px solid {COLORS['danger_border']};
     }}
     QPushButton#btn_danger:hover {{
-        background: #2A0A0A;
-        color: #FCA5A5;
-        border-color: #991B1B;
+        background: #FEE2E2;
+        color: #B91C1C;
+        border-color: #F87171;
     }}
 
     /* ── 成功按鈕 ── */
     QPushButton#btn_success {{
-        background: #0D2A1E;
+        background: #E8F5E9;
         color: {COLORS['success']};
-        border: 1px solid #134E2A;
+        border: 1px solid #A5D6A7;
     }}
     QPushButton#btn_success:hover {{
-        background: #0F3524;
-        color: #34D399;
+        background: #C8E6C9;
+        color: #1B5E20;
     }}
 
     /* ── 表格 ── */
@@ -237,7 +262,7 @@ PAGE_STYLE = f"""
     }}
     QTableWidget::item:selected {{
         background: {COLORS['table_select']};
-        color: #93C5FD;
+        color: {COLORS['accent']};
     }}
     QTableWidget::item:alternate {{
         background: {COLORS['table_alt']};
@@ -245,15 +270,13 @@ PAGE_STYLE = f"""
 
     QHeaderView::section {{
         background: {COLORS['table_head']};
-        color: {COLORS['text_muted']};
+        color: {COLORS['text_primary']};
         border: none;
         border-right: 1px solid {COLORS['grid']};
         border-bottom: 1px solid {COLORS['grid']};
         padding: 10px 14px;
-        font-size: 11px;
+        font-size: 13px;
         font-weight: 700;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
     }}
     QHeaderView::section:last {{
         border-right: none;
@@ -332,7 +355,7 @@ PAGE_STYLE = f"""
         subcontrol-origin: margin;
         subcontrol-position: top left;
         padding: 0 8px;
-        color: {COLORS['text_muted']};
+        color: {COLORS['text_primary']};
         letter-spacing: 1px;
     }}
 
@@ -352,6 +375,22 @@ class BasePage(QWidget):
         self.user = user or {}
         self.setStyleSheet(PAGE_STYLE)
         self._build_base(title, subtitle)
+
+    def showEvent(self, event):
+        """頁面顯示時，強制修正下拉選單的黑邊問題。"""
+        super().showEvent(event)
+        from PyQt6.QtWidgets import QComboBox
+        from PyQt6.QtCore import Qt
+        for combo in self.findChildren(QComboBox):
+            view = combo.view()
+            if view:
+                # 強制設定彈出視窗為透明且無邊框，這能消除 QSS 無法蓋掉的系統層級黑線
+                view.window().setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+                view.window().setWindowFlags(
+                    view.window().windowFlags() | 
+                    Qt.WindowType.FramelessWindowHint | 
+                    Qt.WindowType.NoDropShadowWindowHint
+                )
 
     def _build_base(self, title: str, subtitle: str):
         layout = QVBoxLayout(self)
@@ -428,15 +467,25 @@ class BasePage(QWidget):
         row.setSpacing(12)
         return row
 
-    def confirm(self, title: str, message: str) -> bool:
-        # 使用 None 作為 parent 以避免在 Mac 上的生命週期問題
+    def confirm(self, title: str, message: str, default_yes=False) -> bool:
         dlg = QMessageBox(None)
         dlg.setWindowTitle(title)
         dlg.setText(message)
         dlg.setIcon(QMessageBox.Icon.Question)
         dlg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        dlg.setDefaultButton(QMessageBox.StandardButton.No)
-        dlg.setStyleSheet(PAGE_STYLE)
+
+        if default_yes:
+            dlg.setDefaultButton(QMessageBox.StandardButton.Yes)
+            btn = dlg.button(QMessageBox.StandardButton.Yes)
+            if btn: # 預設為「是」，按鈕變藍色
+                btn.setStyleSheet("background-color: #0984E3; color: white; font-weight: bold; min-width: 80px; height: 28px;")
+        else:
+            dlg.setDefaultButton(QMessageBox.StandardButton.No)
+            btn = dlg.button(QMessageBox.StandardButton.No)
+            if btn: # 預設為「否」，按鈕變深灰色
+                btn.setStyleSheet("background-color: #2D3436; color: white; font-weight: bold; min-width: 80px; height: 28px;")
+            
+        dlg.setStyleSheet(PAGE_STYLE + "QPushButton { border-radius: 4px; padding: 4px 12px; }")
         return dlg.exec() == QMessageBox.StandardButton.Yes
 
     def alert(self, title: str, message: str):
@@ -470,20 +519,48 @@ class BasePage(QWidget):
         
         if style == "primary":
             btn.setObjectName("btn_primary")
+            # 專門為表格按鈕補回顏色，因為 setStyleSheet 會覆蓋全域 QSS
+            btn.setStyleSheet("""
+                QPushButton#btn_primary {
+                    background: #0066CC;
+                    color: #FFFFFF;
+                    font-size: 12px;
+                    padding: 0px;
+                    margin: 0px;
+                    min-height: 0px;
+                    max-height: 26px;
+                    border-radius: 4px;
+                    border: none;
+                }
+                QPushButton#btn_primary:hover { background: #0055AA; }
+            """)
         elif style == "danger":
             btn.setObjectName("btn_danger")
-            
-        # 覆寫全域樣式的 min-height 與 padding，確保在 26px 高度下文字能垂直置中且不被遮蔽
-        btn.setStyleSheet("""
-            QPushButton {
-                font-size: 12px;
-                padding: 0px;
-                margin: 0px;
-                min-height: 0px;
-                max-height: 26px;
-                border-radius: 4px;
-            }
-        """)
+            btn.setStyleSheet("""
+                QPushButton#btn_danger {
+                    background: #FFF5F5;
+                    color: #DC3545;
+                    font-size: 12px;
+                    padding: 0px;
+                    margin: 0px;
+                    min-height: 0px;
+                    max-height: 26px;
+                    border-radius: 4px;
+                    border: 1px solid #FEB2B2;
+                }
+                QPushButton#btn_danger:hover { background: #FEE2E2; }
+            """)
+        else:
+            btn.setStyleSheet("""
+                QPushButton {
+                    font-size: 12px;
+                    padding: 0px;
+                    margin: 0px;
+                    min-height: 0px;
+                    max-height: 26px;
+                    border-radius: 4px;
+                }
+            """)
         return btn
 
     @staticmethod

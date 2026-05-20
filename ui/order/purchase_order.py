@@ -36,6 +36,7 @@ class PurchaseOrderPage(BasePage):
         top.addWidget(QLabel("組別："))
         self.cb_dept = QComboBox()
         self.cb_dept.setMinimumWidth(150)
+        self.cb_dept.addItem("不分組", None)
         for d in ReagentModel.get_all_departments():
             self.cb_dept.addItem(d["dept_name"], d["dept_id"])
         top.addWidget(self.cb_dept)
@@ -48,7 +49,7 @@ class PurchaseOrderPage(BasePage):
         self.content_layout.addLayout(top)
 
         # ── 訂購明細表格 ──
-        headers = ["試劑名稱", "料號", "安全庫存", "目前庫存", "訂購數量"]
+        headers = ["試劑名稱", "料號", "安全庫存", "目前庫存", "訂購數量 (入庫單位)"]
         self.table = QTableWidget(0, len(headers))
         self.table.setHorizontalHeaderLabels(headers)
         
@@ -63,14 +64,14 @@ class PurchaseOrderPage(BasePage):
         self.table.setAlternatingRowColors(True)
         self.table.verticalHeader().setVisible(False)
         self.table.setStyleSheet(
-            "alternate-background-color:#131c2a; background:#111b28; "
-            "border:1px solid #1e2d42; border-radius:6px; "
-            "color:#c0d8f0; gridline-color:#1e2d42; font-size: 13px;"
+            "alternate-background-color:#FDFBF7; background:#FFFFFF; "
+            "border:1px solid #DEE2E6; border-radius:6px; "
+            "color:#2D3436; gridline-color:#DEE2E6; font-size: 13px;"
         )
         self.table.horizontalHeader().setStyleSheet(
-            "QHeaderView::section{background:#1a2535; color:#7ea8c9; "
-            "border:none; border-right:1px solid #2d4060; "
-            "border-bottom:1px solid #2d4060; padding:10px 5px;}"
+            "QHeaderView::section{background:#F1F3F5; color:#2D3436; "
+            "border:none; border-right:1px solid #DEE2E6; "
+            "border-bottom:1px solid #DEE2E6; padding:10px 5px;}"
         )
         self.content_layout.addWidget(self.table)
 
@@ -86,7 +87,7 @@ class PurchaseOrderPage(BasePage):
     def _load_reagents(self):
         vendor_id = self.cb_vendor.currentData()
         dept_id = self.cb_dept.currentData()
-        if not vendor_id or not dept_id:
+        if not vendor_id:
             return
 
         self._reagents = ReagentModel.get_by_vendor_dept(vendor_id, dept_id)
@@ -118,23 +119,46 @@ class PurchaseOrderPage(BasePage):
                     item.setForeground(__import__("PyQt6.QtGui", fromlist=["QColor"]).QColor("#e07820"))
                 self.table.setItem(r, c_idx, item)
 
-            # 訂購數量（透過容器封裝實現絕對垂直置中）
+            # 訂購數量（無框幽靈輸入樣式）
             edit = QLineEdit("0")
             edit.setValidator(QIntValidator(0, 9999))
             edit.setAlignment(Qt.AlignmentFlag.AlignCenter)
-            edit.setFixedHeight(32) # 調高至 32px 確保文字不被遮擋
-            edit.setStyleSheet(
-                "background: transparent; border: none; "
-                "color:#d0e8ff; selection-background-color: #3d5a80; "
-                "font-size: 13px; padding: 0px;"
-            )
+            edit.setFixedSize(60, 42) # 寬度60，高度42完美對齊列高
+            edit.setStyleSheet("""
+                QLineEdit {
+                    background: transparent;
+                    border: none;
+                    outline: none;
+                    color: #2D3436;
+                    font-size: 14px;
+                    padding: 0px;
+                    margin: 0px;
+                }
+                QLineEdit:hover { background: rgba(0, 0, 0, 0.03); }
+                QLineEdit:focus {
+                    background: rgba(255, 255, 255, 0.8);
+                    border-bottom: 2px solid #0066CC;
+                }
+            """)
             
-            # 建立容器並將輸入框「拎起來」放到正中央
+            # 建立容器並將輸入框與單位並排置中
             container = QWidget()
+            container.setStyleSheet("background: transparent; border: none;")
             layout = QHBoxLayout(container)
+            
+            # 使用 Stretch 把元件擠在正中央
+            layout.addStretch()
             layout.addWidget(edit)
-            layout.setContentsMargins(5, 0, 5, 0) # 左右留一點點邊距，上下交給 layout 自動對齊
-            layout.setAlignment(Qt.AlignmentFlag.AlignCenter) # 強制垂直與水平置中
+            
+            lbl_unit = QLabel(stock_unit)
+            lbl_unit.setFixedHeight(42)
+            lbl_unit.setAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+            lbl_unit.setStyleSheet("color: #636E72; font-size: 14px; border: none; background: transparent; padding-bottom: 6px; margin: 0px;")
+            layout.addWidget(lbl_unit)
+            layout.addStretch()
+            
+            layout.setContentsMargins(0, 0, 0, 0) 
+            layout.setSpacing(2) # 輸入框與單位的微小間距
             self.table.setCellWidget(r, 4, container)
 
     def _save_and_print(self):
@@ -176,7 +200,7 @@ class PurchaseOrderPage(BasePage):
         # 列印訂購單（ZPL A4 / 一般訂購條碼標籤）
         self._print_po(po_code, vendor_name, dept_name, order_items)
 
-        self.alert(self, "訂單已建立",
+        self.alert("訂單已建立",
                    f"訂購單條碼：{po_code}\n共 {len(order_items)} 項試劑")
         self.table.setRowCount(0)
         self._reagents = []

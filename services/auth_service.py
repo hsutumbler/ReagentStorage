@@ -5,7 +5,7 @@ from database.connection import DBContext
 
 
 ROLE_LABELS = {
-    1: "一般人員",
+    1: "一般使用者",
     2: "試劑負責人",
     3: "組長/技術主任",
     4: "系統管理員",   # 權限等同組長/技術主任

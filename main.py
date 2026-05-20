@@ -8,28 +8,28 @@ from config import APP_NAME, DEFAULT_FONT
 from database.connection import test_connection, DatabasePool
 
 
-def _apply_dark_palette(app: QApplication):
-    """套用全域深色 QPalette，確保 Qt 內建元件（滾動條、對話框等）一致。"""
+def _apply_light_palette(app: QApplication):
+    """套用全域亮色 QPalette，確保所有底層元件與背景風格統一。"""
     palette = QPalette()
     c = {
-        "window":       QColor("#0A0F1E"),
-        "window_text":  QColor("#E2E8F0"),
-        "base":         QColor("#0D1117"),
-        "alt_base":     QColor("#0F1628"),
-        "tooltip_base": QColor("#141E30"),
-        "tooltip_text": QColor("#E2E8F0"),
-        "text":         QColor("#E2E8F0"),
-        "button":       QColor("#141E30"),
-        "button_text":  QColor("#94A3B8"),
+        "window":       QColor("#F8F9FA"),
+        "window_text":  QColor("#2D3436"),
+        "base":         QColor("#FFFFFF"),
+        "alt_base":     QColor("#FDFBF7"),
+        "tooltip_base": QColor("#FFFFFF"),
+        "tooltip_text": QColor("#2D3436"),
+        "text":         QColor("#2D3436"),
+        "button":       QColor("#F1F3F5"),
+        "button_text":  QColor("#2D3436"),
         "bright_text":  QColor("#FFFFFF"),
-        "link":         QColor("#60A5FA"),
-        "highlight":    QColor("#1D4ED8"),
+        "link":         QColor("#0066CC"),
+        "highlight":    QColor("#0066CC"),
         "highlight_text": QColor("#FFFFFF"),
-        "dark":         QColor("#060C18"),
-        "mid":          QColor("#0F1628"),
-        "mid_light":    QColor("#141E30"),
-        "shadow":       QColor("#04080F"),
-        "light":        QColor("#1A2540"),
+        "dark":         QColor("#CED4DA"),
+        "mid":          QColor("#DEE2E6"),
+        "mid_light":    QColor("#E9ECEF"),
+        "shadow":       QColor("#ADB5BD"),
+        "light":        QColor("#F8F9FA"),
     }
     palette.setColor(QPalette.ColorRole.Window,          c["window"])
     palette.setColor(QPalette.ColorRole.WindowText,      c["window_text"])
@@ -61,8 +61,8 @@ def main():
     font = QFont(DEFAULT_FONT, 10)
     app.setFont(font)
 
-    # 套用深色 Palette
-    _apply_dark_palette(app)
+    # 套用亮色 # 調色盤
+    _apply_light_palette(app)
 
     # 測試資料庫連線
     if not test_connection():

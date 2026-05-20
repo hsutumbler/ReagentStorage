@@ -55,6 +55,7 @@ class VendorManagementPage(BasePage):
             # 操作按鈕容器
             from PyQt6.QtWidgets import QWidget, QHBoxLayout
             action_widget = QWidget()
+            action_widget.setStyleSheet("background: transparent;")
             action_layout = QHBoxLayout(action_widget)
             action_layout.setContentsMargins(10, 0, 10, 0)
             action_layout.setSpacing(12)
@@ -88,7 +89,7 @@ class VendorManagementPage(BasePage):
             self._load_data()
 
     def _delete_vendor(self, vendor_id: int, vendor_name: str):
-        if not self.confirm(self, "確認刪除", f"確定要刪除廠商「{vendor_name}」嗎？\n此操作無法復原！"):
+        if not self.confirm("確認刪除", f"確定要刪除廠商「{vendor_name}」嗎？\n此操作無法復原！"):
             return
         
         try:

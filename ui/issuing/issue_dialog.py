@@ -22,7 +22,13 @@ class IssuePage(BasePage):
         super().__init__("出庫", "掃描 RID 或 QR Code 進行出庫", user)
         self._current_item = None
         self._pending_qr = None  # 暫存待列印的 QR 資料
+        self.content_layout.setSpacing(10) # 縮小垂直間距
         self._build()
+
+    def on_page_show(self):
+        """當導航切換至此頁面時執行。"""
+        self.f_rid.setFocus()
+        self.f_rid.selectAll()
 
     def _build(self):
         # ── 掃描區 ──
@@ -64,7 +70,7 @@ class IssuePage(BasePage):
         self.lbl_print_exp = QLabel("出庫日期：—")
         
         # 設定樣式並加入對應欄位
-        label_style = "color:#c0d8f0; font-size:14px; font-weight:500;"
+        label_style = "color:#2D3436; font-size:14px; font-weight:700;"
         for lbl in [self.lbl_name, self.lbl_rid, self.lbl_lot]:
             lbl.setStyleSheet(label_style)
             col_left.addWidget(lbl)
@@ -77,16 +83,18 @@ class IssuePage(BasePage):
         info_main_layout.addLayout(col_right, 1)
         
         self.lbl_warn = QLabel("")
-        self.lbl_warn.setStyleSheet("color:#f0a040; font-weight:bold; font-size:12px;")
+        self.lbl_warn.setStyleSheet("color:#FF8C00; font-weight:bold; font-size:12px;")
         
         # 整個內容區塊包裝
         info_wrapper = QVBoxLayout()
+        info_wrapper.setSpacing(2)
         info_wrapper.addWidget(info_card)
         info_wrapper.addWidget(self.lbl_warn)
         self.content_layout.addLayout(info_wrapper)
 
         # ── 出庫設定 & 確認 ──
         bottom = QHBoxLayout()
+        bottom.setContentsMargins(0, 5, 0, 10)
         bottom.addWidget(QLabel("出庫模式："))
         self.cb_mode = QComboBox()
         for k, v in ISSUE_MODES.items():
@@ -95,9 +103,9 @@ class IssuePage(BasePage):
 
         self.chk_large = QCheckBox("列印一般標籤")
         self.chk_large.setChecked(True)
-        self.chk_large.setStyleSheet("color:#a0c0dc;")
+        self.chk_large.setStyleSheet("color:#636E72;")
         self.chk_qr = QCheckBox("列印 QR Code 標籤")
-        self.chk_qr.setStyleSheet("color:#a0c0dc;")
+        self.chk_qr.setStyleSheet("color:#636E72;")
 
         # 使標籤選項互斥
         self.btn_group = QButtonGroup(self)
@@ -118,7 +126,7 @@ class IssuePage(BasePage):
 
         # ── 本次出庫記錄 ──
         lbl = QLabel("本次出庫記錄")
-        lbl.setStyleSheet("color:#60c0ff; font-weight:bold; font-size:14px;")
+        lbl.setStyleSheet("color:#2D3436; font-weight:bold; font-size:14px;")
         self.content_layout.addWidget(lbl)
 
         headers = ["RID", "試劑名稱", "批號", "穩定效期", "開封效期", "出庫日期", "出庫模式"]
@@ -179,18 +187,26 @@ class IssuePage(BasePage):
 
         self.lbl_warn.setText("\n".join(warnings))
 
-        # FEFO 警示彈窗
+        # ── 主動詢問出庫 ──
         if earlier:
-            reply = self.confirm(
-                self, "FEFO 提醒",
-                f"庫存中有 {len(earlier)} 瓶同試劑效期更早：\n"
-                + "\n".join(f"  RID: {e['rid']}  效期: {e['expiry_date']}" for e in earlier[:3])
-                + "\n\n仍要出庫此瓶嗎？"
-            )
-            if not reply:
-                self._current_item = None
-                self.f_rid.clear()
-                return
+            # FEFO 警示：預設為「否」，防止誤出
+            msg = (f"【FEFO 警示】庫存中有 {len(earlier)} 瓶同試劑效期更早：\n"
+                   + "\n".join(f"  RID: {e['rid']}  效期: {e['expiry_date']}" for e in earlier[:3])
+                   + "\n\n仍要強行出庫此瓶嗎？")
+            reply = self.confirm("FEFO 提醒", msg, default_yes=False)
+            if reply:
+                self._do_issue()
+            else:
+                self.f_rid.setFocus()
+                self.f_rid.selectAll()
+        else:
+            # 一般出庫：預設為「是」，按 Enter 即可完成
+            reply = self.confirm("確認出庫", f"確定要出庫試劑：{item['reagent_name']} (RID: {rid}) 嗎？", default_yes=True)
+            if reply:
+                self._do_issue()
+            else:
+                self.f_rid.setFocus()
+                self.f_rid.selectAll()
 
     def _parse_rid(self, raw: str) -> str | None:
         """從原始掃描字串解析出 RID。"""
@@ -256,10 +272,10 @@ class IssuePage(BasePage):
                     self.warn( "列印錯誤", str(e))
             else:
                 # 第一瓶，詢問是否等下一瓶
-                reply = self.confirm(self, "列印詢問", "是否有下一瓶 QR 要出庫？\n(點擊「是」將等待下一瓶併案列印，點擊「否」則立即印出單張)")
+                reply = self.confirm("列印詢問", "是否有下一瓶 QR 要出庫？\n(點擊「是」將等待下一瓶併案列印，點擊「否」則立即印出單張)")
                 if reply:
                     self._pending_qr = current_qr
-                    self.alert(self, "等待中", "已暫存標籤資訊，請掃描下一瓶試劑...")
+                    self.alert("等待中", "已暫存標籤資訊，請掃描下一瓶試劑...")
                 else:
                     try:
                         print_issue_label_qr(rid, name, lot, print_exp_str, today_str, self.user["name"])
@@ -284,7 +300,11 @@ class IssuePage(BasePage):
         self.lbl_open_exp.setText("開封效期：—")
         self.lbl_print_exp.setText("出庫日期：—")
         self.lbl_warn.setText("")
-        self.alert(self, "出庫完成", f"RID {rid} 出庫成功")
+        self.alert("出庫完成", f"RID {rid} 出庫成功")
+        
+        # 游標回到輸入框並全選，方便下一筆掃描
+        self.f_rid.setFocus()
+        self.f_rid.selectAll()
 
     def _show_preview(self):
         if not self._current_item:

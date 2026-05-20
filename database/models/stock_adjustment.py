@@ -20,13 +20,31 @@ class StockAdjustmentModel:
             return c.lastrowid
 
     @staticmethod
-    def query_all() -> list[dict]:
-        sql = """
+    def query_all(query="", date_from=None, date_to=None) -> list[dict]:
+        params = []
+        where = []
+        
+        if query:
+            where.append("(sa.reagent_name LIKE %s OR sa.rid LIKE %s)")
+            params.extend([f"%{query}%", f"%{query}%"])
+            
+        if date_from:
+            where.append("DATE(sa.adjusted_at) >= %s")
+            params.append(date_from)
+            
+        if date_to:
+            where.append("DATE(sa.adjusted_at) <= %s")
+            params.append(date_to)
+
+        where_sql = " WHERE " + " AND ".join(where) if where else ""
+        
+        sql = f"""
             SELECT sa.*, u.name as adjuster_name
             FROM stock_adjustments sa
             JOIN users u ON sa.adjusted_by = u.user_id
+            {where_sql}
             ORDER BY sa.adjusted_at DESC
         """
         with DBContext() as (_, c):
-            c.execute(sql)
+            c.execute(sql, params)
             return c.fetchall()

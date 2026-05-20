@@ -57,11 +57,11 @@ class ReagentManagementPage(BasePage):
         header.setSectionResizeMode(header.ResizeMode.Interactive)
         
         # 針對特定欄位進行優化
-        header.setSectionResizeMode(0, header.ResizeMode.Stretch) # 名稱自動伸展
-        self.table.setColumnWidth(0, 200) # 但至少給 200px
+        header.setSectionResizeMode(0, header.ResizeMode.Interactive) # 改為互動模式以支援自定義寬度
+        self.table.setColumnWidth(0, 120) # 加大名稱寬度
         
         # 其他欄位設定合適的寬度
-        widths = {1:100, 2:100, 3:120, 4:100, 5:120, 6:100, 7:100, 8:180}
+        widths = {1:100, 2:100, 3:100, 4:100, 5:120, 6:70, 7:100, 8:180}
         for col, w in widths.items():
             self.table.setColumnWidth(col, w)
             if col == 8:
@@ -135,6 +135,7 @@ class ReagentManagementPage(BasePage):
             # 操作按鈕容器
             from PyQt6.QtWidgets import QWidget, QHBoxLayout
             action_widget = QWidget()
+            action_widget.setStyleSheet("background: transparent;")
             action_layout = QHBoxLayout(action_widget)
             action_layout.setContentsMargins(10, 0, 10, 0) # 增加左右邊距
             action_layout.setSpacing(12) # 增加按鈕間距
@@ -227,6 +228,7 @@ class ReagentDialog(QDialog):
 
         self.f_open_days = QSpinBox()
         self.f_open_days.setRange(0, 3650)
+        self.f_open_days.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
         self.f_open_days.setValue(reagent["open_days"] or 0 if reagent else 0)
         
         # 單位換算選單 — 切換時更新安全庫存單位標籤
@@ -244,17 +246,12 @@ class ReagentDialog(QDialog):
         self.f_safety = QDoubleSpinBox()
         self.f_safety.setRange(0, 99999)
         self.f_safety.setDecimals(1)
+        self.f_safety.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
         self.f_safety.setValue(float(reagent["safety_stock"] or 0) if reagent else 0)
         self.lbl_safety_unit = QLabel("")
         safety_row = QHBoxLayout()
         safety_row.addWidget(self.f_safety)
         safety_row.addWidget(self.lbl_safety_unit)
-
-        for w in [self.f_open_days, self.f_safety]:
-            w.setStyleSheet(
-                "background:#1a2535; border:1px solid #2d4060; "
-                "border-radius:6px; color:#d0e8ff; padding:7px 10px;"
-            )
 
         # 切換換算設定時動態更新安全庫存的單位標籤
         self.cb_unit.currentIndexChanged.connect(self._update_safety_unit_label)

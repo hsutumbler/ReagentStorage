@@ -53,6 +53,7 @@ class UserManagementPage(BasePage):
             # 操作按鈕容器
             from PyQt6.QtWidgets import QWidget, QHBoxLayout
             action_widget = QWidget()
+            action_widget.setStyleSheet("background: transparent;")
             action_layout = QHBoxLayout(action_widget)
             action_layout.setContentsMargins(10, 0, 10, 0)
             action_layout.setSpacing(12)
@@ -90,7 +91,7 @@ class UserManagementPage(BasePage):
             self._load_data()
 
     def _delete_user(self, user_id: int, employee_id: str):
-        if not self.confirm(self, "確認刪除", f"確定要刪除員工「{employee_id}」嗎？\n此操作無法復原！"):
+        if not self.confirm("確認刪除", f"確定要刪除員工「{employee_id}」嗎？\n此操作無法復原！"):
             return
         
         try:

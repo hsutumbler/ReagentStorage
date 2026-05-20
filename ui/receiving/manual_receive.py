@@ -2,11 +2,11 @@
 
 from datetime import date
 from PyQt6.QtWidgets import (
-    QHBoxLayout, QVBoxLayout, QLabel, QLineEdit,
+    QHBoxLayout, QVBoxLayout, QGridLayout, QLabel, QLineEdit,
     QPushButton, QComboBox, QDateEdit, QSpinBox,
     QFrame, QMessageBox, QCheckBox, QTableWidgetItem, QButtonGroup
 )
-from PyQt6.QtCore import QDate
+from PyQt6.QtCore import QDate, Qt, QObject, QEvent
 from ui.base_page import BasePage
 from database.models.vendor import VendorModel
 from database.models.reagent import ReagentModel
@@ -34,63 +34,66 @@ class ManualReceivePage(BasePage):
         card_layout = QVBoxLayout(card)
         card_layout.setSpacing(12)
 
-        row1 = QHBoxLayout()
-        row1.addWidget(QLabel("廠商 *"))
+        # ── 入庫表單 (使用 Grid 以達成上下對齊) ──
+        grid = QGridLayout()
+        grid.setSpacing(15)
+        grid.setContentsMargins(10, 10, 10, 10)
+
+        # 第一排
+        grid.addWidget(QLabel("廠商 *"), 0, 0)
         self.cb_vendor = QComboBox()
         self.cb_vendor.setMinimumWidth(180)
         self.cb_vendor.addItem("— 請選擇廠商 —", None)
         for v in VendorModel.get_all():
             self.cb_vendor.addItem(v["vendor_name"], v["vendor_id"])
         self.cb_vendor.currentIndexChanged.connect(self._load_reagents)
-        row1.addWidget(self.cb_vendor)
+        grid.addWidget(self.cb_vendor, 0, 1)
 
-        row1.addWidget(QLabel("試劑 *"))
+        grid.addWidget(QLabel("試劑 *"), 0, 2)
         self.cb_reagent = QComboBox()
         self.cb_reagent.setMinimumWidth(240)
         self._load_reagents()
-        row1.addWidget(self.cb_reagent)
+        grid.addWidget(self.cb_reagent, 0, 3)
 
-        row1.addWidget(QLabel("批號 *"))
+        grid.addWidget(QLabel("批號 *"), 0, 4)
         self.f_lot = QLineEdit()
         self.f_lot.setPlaceholderText("請輸入批號")
         self.f_lot.setMaxLength(50)
-        row1.addWidget(self.f_lot)
-        row1.addStretch()
-        card_layout.addLayout(row1)
+        self.f_lot.setMinimumWidth(180)
+        grid.addWidget(self.f_lot, 0, 5)
 
-        row2 = QHBoxLayout()
-        row2.addWidget(QLabel("穩定效期 *"))
+        # 第二排
+        grid.addWidget(QLabel("穩定效期 *"), 1, 0)
         self.f_expiry = QDateEdit()
         self.f_expiry.setCalendarPopup(True)
         self.f_expiry.setDate(QDate.currentDate().addMonths(6))
-        self.f_expiry.setDisplayFormat("yyyy-MM-dd")
-        row2.addWidget(self.f_expiry)
+        self.f_expiry.setDisplayFormat("yyyy / MM / dd")
+        self.f_expiry.setFixedWidth(200)
+        grid.addWidget(self.f_expiry, 1, 1)
 
-        row2.addWidget(QLabel("數量（瓶） *"))
+        grid.addWidget(QLabel("數量（瓶） *"), 1, 2)
         self.f_qty = QSpinBox()
         self.f_qty.setRange(1, 999)
         self.f_qty.setValue(1)
-        self.f_qty.setStyleSheet(
-            "background:#1a2535; border:1px solid #2d4060; border-radius:6px; "
-            "color:#d0e8ff; padding:7px 10px;"
-        )
-        row2.addWidget(self.f_qty)
+        self.f_qty.setButtonSymbols(QSpinBox.ButtonSymbols.NoButtons)
+        self.f_qty.setMinimumWidth(240)
+        grid.addWidget(self.f_qty, 1, 3)
 
-        row2.addWidget(QLabel("入庫模式"))
+        grid.addWidget(QLabel("入庫模式"), 1, 4)
         self.cb_mode = QComboBox()
         for k, v in RECEIVE_MODES.items():
             self.cb_mode.addItem(v, k)
-        row2.addWidget(self.cb_mode)
-        row2.addStretch()
-        card_layout.addLayout(row2)
+        self.cb_mode.setMinimumWidth(180)
+        grid.addWidget(self.cb_mode, 1, 5)
 
-        # 列印選項
-        print_row = QHBoxLayout()
+        # 第三排：列印選項與入庫按鈕
         self.chk_print_large = QCheckBox("列印一般標籤")
         self.chk_print_large.setChecked(True)
-        self.chk_print_large.setStyleSheet("color:#a0c0dc;")
+        # padding-left: 8px 讓文字與框框拉開一個字元左右的距離
+        self.chk_print_large.setStyleSheet("color:#2D3436; padding-left: 8px; background: transparent;")
+        
         self.chk_print_qr = QCheckBox("列印 QR Code 標籤")
-        self.chk_print_qr.setStyleSheet("color:#a0c0dc;")
+        self.chk_print_qr.setStyleSheet("color:#2D3436; padding-left: 8px; background: transparent;")
 
         # 使標籤選項互斥
         self.btn_group = QButtonGroup(self)
@@ -98,22 +101,56 @@ class ManualReceivePage(BasePage):
         self.btn_group.addButton(self.chk_print_qr)
         self.btn_group.setExclusive(True)
 
-        print_row.addWidget(self.chk_print_large)
-        print_row.addWidget(self.chk_print_qr)
-        
-        print_row.addStretch()
+        grid.addWidget(self.chk_print_large, 2, 0, 1, 2)
+        grid.addWidget(self.chk_print_qr, 2, 2, 1, 2)
 
-        btn_receive = QPushButton("✔  確認入庫")
-        btn_receive.setObjectName("btn_primary")
-        btn_receive.clicked.connect(self._do_receive)
-        print_row.addWidget(btn_receive)
-        card_layout.addLayout(print_row)
+        self.btn_receive = QPushButton("✔  確認入庫")
+        self.btn_receive.setObjectName("btn_primary")
+        self.btn_receive.clicked.connect(self._do_receive)
+        self.btn_receive.setFixedWidth(180)
+        grid.addWidget(self.btn_receive, 2, 5)
+
+        card_layout.addLayout(grid)
 
         self.content_layout.addWidget(card)
+        
+        # ── 設定 Enter 鍵自動跳轉邏輯 ──
+        # 下拉選單在使用者選擇選項 (滑鼠點擊或鍵盤 Enter) 時觸發
+        self.cb_vendor.activated.connect(lambda: self.cb_reagent.setFocus())
+        self.cb_reagent.activated.connect(lambda: self.f_lot.setFocus())
+        # 輸入框與效期(LineEdit)在按下 Enter 時觸發
+        self.f_lot.returnPressed.connect(lambda: self.f_expiry.setFocus())
+        self.f_expiry.lineEdit().returnPressed.connect(lambda: self.f_qty.setFocus())
+
+        # QSpinBox 與 QPushButton 對 Enter 鍵有內部攔截機制，使用 EventFilter 確保精準觸發
+        class EnterJumpFilter(QObject):
+            def __init__(self, target):
+                super().__init__()
+                self.target = target
+            def eventFilter(self, obj, event):
+                if event.type() == QEvent.Type.KeyPress and event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                    self.target.setFocus()
+                    return True
+                return super().eventFilter(obj, event)
+
+        class EnterClickFilter(QObject):
+            def eventFilter(self, obj, event):
+                if event.type() == QEvent.Type.KeyPress and event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+                    obj.click()
+                    return True
+                return super().eventFilter(obj, event)
+
+        # 數量框按下 Enter -> 跳到確認按鈕
+        self._qty_filter = EnterJumpFilter(self.btn_receive)
+        self.f_qty.installEventFilter(self._qty_filter)
+        
+        # 按鈕獲得焦點時，按下 Enter -> 視同點擊
+        self._btn_filter = EnterClickFilter()
+        self.btn_receive.installEventFilter(self._btn_filter)
 
         # ── 本次入庫記錄 ──
         lbl = QLabel("本次入庫記錄")
-        lbl.setStyleSheet("color:#60c0ff; font-weight:bold; font-size:14px;")
+        lbl.setStyleSheet("color:#2D3436; font-weight:bold; font-size:14px;")
         self.content_layout.addWidget(lbl)
 
         headers = ["RID", "試劑名稱", "批號", "穩定效期", "入庫日期", "入庫模式"]
@@ -147,18 +184,18 @@ class ManualReceivePage(BasePage):
             self.warn( "驗證", "請輸入批號")
             return
         if expiry <= date.today():
-            if not self.confirm(self, "效期警告", "穩定效期已過或為今日，確定要入庫嗎？"):
+            if not self.confirm("效期警告", "穩定效期已過 or 為今日，確定要入庫嗎？"):
                 return
 
         # 批號重複警示
         if InventoryModel.check_lot_duplicate(reagent_id, lot_number):
-            if not self.confirm(self, "批號警示",
+            if not self.confirm("批號警示",
                                 f"批號「{lot_number}」曾使用過，確定要入庫嗎？"):
                 return
 
         # 效期比現存更早的警示
         if InventoryModel.check_expiry_earlier(reagent_id, expiry):
-            if not self.confirm(self, "效期警示",
+            if not self.confirm("效期警示",
                                 "新批號的穩定效期比現有庫存更早，確定要入庫嗎？"):
                 return
 
@@ -220,10 +257,10 @@ class ManualReceivePage(BasePage):
             # 剩下最後一瓶（單數）
             if qr_queue:
                 remaining = qr_queue[0]
-                reply = self.confirm(self, "列印詢問", "入庫數量為單數，最後一瓶要等待下一筆併案列印嗎？\n(點擊「是」則暫存，點擊「否」則立即印出單張)")
+                reply = self.confirm("列印詢問", "入庫數量為單數，最後一瓶要等待下一筆併案列印嗎？\n(點擊「是」則暫存，點擊「否」則立即印出單張)")
                 if reply:
                     self._pending_qr = remaining
-                    self.alert(self, "等待中", "最後一瓶標籤已暫存，請繼續下一筆入庫...")
+                    self.alert("等待中", "最後一瓶標籤已暫存，請繼續下一筆入庫...")
                 else:
                     try:
                         print_receive_batch_qr([remaining])
@@ -238,7 +275,7 @@ class ManualReceivePage(BasePage):
             for c_idx, val in enumerate([rid, name, lot_number, expiry_str, today_str, mode_label]):
                 self.table.setItem(r, c_idx, QTableWidgetItem(val))
 
-        self.alert(self, "入庫完成", f"已入庫 {qty} 瓶，RID：{new_rows[0]}～{new_rows[-1]}")
+        self.alert("入庫完成", f"已入庫 {qty} 瓶，RID：{new_rows[0]}～{new_rows[-1]}")
 
         # 清除表單
         self.f_lot.clear()

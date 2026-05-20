@@ -29,11 +29,11 @@ class PurchaseOrderModel:
     def get_by_code(po_code: str) -> dict | None:
         with DBContext() as (_, c):
             c.execute(
-                "SELECT po.*, v.vendor_name, d.dept_name, "
+                "SELECT po.*, v.vendor_name, COALESCE(d.dept_name, '不分組') as dept_name, "
                 "       (SELECT MIN(received_date) FROM inventory WHERE po_id = po.po_id) as received_date "
                 "FROM purchase_orders po "
                 "JOIN vendors v ON po.vendor_id = v.vendor_id "
-                "JOIN departments d ON po.dept_id = d.dept_id "
+                "LEFT JOIN departments d ON po.dept_id = d.dept_id "
                 "WHERE po.po_code=%s",
                 (po_code,),
             )
@@ -43,7 +43,9 @@ class PurchaseOrderModel:
     def get_items(po_id: int) -> list[dict]:
         with DBContext() as (_, c):
             c.execute(
-                "SELECT poi.*, r.reagent_name, r.item_number, u.stock_unit "
+                "SELECT poi.*, r.reagent_name, r.item_number, u.stock_unit, "
+                "       (SELECT lot_number FROM inventory WHERE po_id=poi.po_id AND reagent_id=poi.reagent_id LIMIT 1) as lot_number, "
+                "       (SELECT expiry_date FROM inventory WHERE po_id=poi.po_id AND reagent_id=poi.reagent_id LIMIT 1) as expiry_date "
                 "FROM purchase_order_items poi "
                 "JOIN reagents r ON poi.reagent_id = r.reagent_id "
                 "LEFT JOIN unit_conversions u ON r.unit_id = u.unit_id "
@@ -72,10 +74,11 @@ class PurchaseOrderModel:
     def query_orders(vendor_id=None, dept_id=None,
                      date_from=None, date_to=None) -> list[dict]:
         sql = """
-            SELECT po.*, v.vendor_name, d.dept_name, u.name as creator_name
+            SELECT po.*, v.vendor_name, COALESCE(d.dept_name, '不分組') as dept_name, 
+                   u.name as creator_name
             FROM purchase_orders po
             JOIN vendors v ON po.vendor_id = v.vendor_id
-            JOIN departments d ON po.dept_id = d.dept_id
+            LEFT JOIN departments d ON po.dept_id = d.dept_id
             JOIN users u ON po.created_by = u.user_id
             WHERE 1=1
         """

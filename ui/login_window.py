@@ -103,70 +103,69 @@ class LoginWindow(QDialog):
         self.input_id.returnPressed.connect(lambda: self.input_pw.setFocus())
 
     def _apply_style(self):
-        self.setStyleSheet("""
-            QDialog { background: transparent; }
+        self.setStyleSheet(f"""
+            QDialog {{ background: #F8F9FA; }}
 
-            #login_card {
-                background: #111827;
-                border-radius: 20px;
-                border: 1px solid #1F2A3C;
-            }
+            #login_card {{
+                background: #FFFFFF;
+                border-radius: 12px;
+                border: 1px solid #DEE2E6;
+            }}
 
-            #brand_icon {
+            #brand_icon {{
                 font-size: 36px;
-                color: #3B82F6;
-            }
+                color: #0066CC;
+            }}
 
-            #brand_title {
-                color: #F1F5F9;
+            #brand_title {{
+                color: #2D3436;
                 font-size: 20px;
                 font-weight: 700;
                 font-family: {DEFAULT_FONT};
                 letter-spacing: 2px;
-            }
+            }}
 
-            #brand_subtitle {
-                color: #475569;
+            #brand_subtitle {{
+                color: #636E72;
                 font-size: 12px;
                 font-family: {DEFAULT_FONT};
                 letter-spacing: 1px;
-            }
+            }}
 
-            #input_label {
-                color: #94A3B8;
-                font-size: 12px;
-                font-weight: 600;
+            #input_label {{
+                color: #2D3436;
+                font-size: 14px;
+                font-weight: 700;
                 font-family: {DEFAULT_FONT};
-                letter-spacing: 1px;
-            }
+            }}
 
-            #btn_login {
-                background: #3B82F6;
+            #btn_login {{
+                background: #0066CC;
                 color: #FFFFFF;
                 border: none;
-                border-radius: 10px;
+                border-radius: 8px;
                 font-size: 15px;
                 font-weight: 700;
                 font-family: {DEFAULT_FONT};
                 letter-spacing: 6px;
-            }
-            #btn_login:hover {
-                background: #2563EB;
-            }
-            #btn_login:pressed {
-                background: #1D4ED8;
-            }
+            }}
+            #btn_login:hover {{
+                background: #0055AA;
+            }}
+            #btn_login:disabled {{
+                background: #B2BEC3;
+            }}
 
-            #status_label {
-                color: #F87171;
+            #status_label {{
+                color: #DC3545;
                 font-size: 12px;
                 font-family: {DEFAULT_FONT};
-            }
+            }}
 
-            #version_label {
-                color: #1E2A3C;
+            #version_label {{
+                color: #B2BEC3;
                 font-size: 11px;
-            }
+            }}
         """)
 
     # ── 登入邏輯 ───────────────────────────────────────────
@@ -227,19 +226,19 @@ class _StyledInput(QLineEdit):
             self.setEchoMode(QLineEdit.EchoMode.Password)
         self.setStyleSheet("""
             QLineEdit {
-                background: #0D1117;
-                border: 1.5px solid #1F2A3C;
-                border-radius: 10px;
-                color: #E2E8F0;
+                background: #F8F9FA;
+                border: 1.5px solid #DEE2E6;
+                border-radius: 8px;
+                color: #2D3436;
                 font-size: 14px;
                 padding: 0 16px;
                 font-family: {DEFAULT_FONT};
             }
             QLineEdit:focus {
-                border-color: #3B82F6;
-                background: #0F172A;
+                border-color: #0066CC;
+                background: #FFFFFF;
             }
             QLineEdit::placeholder {
-                color: #334155;
+                color: #B2BEC3;
             }
         """)

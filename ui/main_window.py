@@ -49,7 +49,7 @@ NAV_GROUPS = [
         "items": [
             {"icon": "🛒", "label": "試劑訂單",    "key": "po",         "role_min": 1},
             {"icon": "✏️", "label": "調整庫存",    "key": "adjustment", "role_min": 2},
-            {"icon": "⚠️", "label": "不合格試劑",  "key": "nc",         "role_min": 1},
+            {"icon": "⚠️", "label": "不合格試劑記錄",  "key": "nc",         "role_min": 1},
         ],
     },
     {
@@ -57,9 +57,9 @@ NAV_GROUPS = [
         "items": [
             {"icon": "🔍", "label": "庫存追溯",   "key": "q_trace", "role_min": 1},
             {"icon": "📊", "label": "庫存盤點",   "key": "q_stock", "role_min": 1},
-            {"icon": "📋", "label": "調整記錄",   "key": "q_adj",   "role_min": 1},
-            {"icon": "📄", "label": "訂購單查詢", "key": "q_order", "role_min": 1},
-            {"icon": "🚫", "label": "不合格查詢", "key": "q_nc",    "role_min": 1},
+            {"icon": "📋", "label": "調整庫存查詢",   "key": "q_adj",   "role_min": 1},
+            {"icon": "📄", "label": "試劑訂單查詢", "key": "q_order", "role_min": 1},
+            {"icon": "🚫", "label": "不合格試劑查詢", "key": "q_nc",    "role_min": 1},
         ],
     },
     {
@@ -255,13 +255,23 @@ class MainWindow(QMainWindow):
         if key not in self._page_map:
             return
         self._current_key = key
-        self.stack.setCurrentWidget(self._page_map[key])
+        page = self._page_map[key]
+        self.stack.setCurrentWidget(page)
         for k, btn in self._nav_btns.items():
             btn.setChecked(k == key)
+            
+        # 如果頁面有定義顯示時的動作 (例如自動聚焦)，則執行
+        if hasattr(page, "on_page_show"):
+            page.on_page_show()
 
     def _navigate_first(self):
-        """登入後預設跳轉至儀表板。"""
-        self._navigate("dashboard")
+        """根據角色設定登入後的初始頁面。"""
+        # 一般使用者 (role=1) 直接進「出庫」
+        if self.user.get("role") == 1:
+            self._navigate("issue")
+        else:
+            # 組長、主任、管理員進「儀表板」
+            self._navigate("dashboard")
 
     # ── 登出 ───────────────────────────────────────────────
     def _logout(self):
@@ -288,59 +298,59 @@ class MainWindow(QMainWindow):
             }
 
             QMainWindow, #content_area {
-                background: #0A0F1E;
+                background: #FDFBF7;
             }
 
             /* ── 側邊欄 ── */
             #sidebar {
-                background: #0D1528;
-                border-right: 1px solid #1A2540;
+                background: #F1F4F9;
+                border-right: 1px solid #DEE2E6;
             }
 
             #logo_bar {
-                background: #0A1020;
+                background: #EBF0F6;
             }
             #sidebar_logo_icon {
                 font-size: 20px;
             }
             #sidebar_logo_text {
-                color: #E2E8F0;
+                color: #2D3436;
                 font-size: 15px;
                 font-weight: 700;
                 letter-spacing: 1px;
             }
 
             #user_info_bar {
-                background: #0D1528;
+                background: #F1F4F9;
             }
             #user_avatar {
-                background: #1D4ED8;
+                background: #0066CC;
                 color: #FFFFFF;
                 border-radius: 18px;
                 font-size: 14px;
                 font-weight: 700;
             }
             #user_name_label {
-                color: #CBD5E1;
+                color: #2D3436;
                 font-size: 13px;
                 font-weight: 600;
             }
             #user_role_label {
-                color: #475569;
+                color: #636E72;
                 font-size: 11px;
             }
 
             #sidebar_divider {
-                background: #1A2540;
+                background: #DEE2E6;
                 border: none;
             }
 
             /* ── 導航 ── */
             #nav_wrap {
-                background: #0D1528;
+                background: #F1F4F9;
             }
             #nav_group_label {
-                color: #334155;
+                color: #B2BEC3;
                 font-size: 10px;
                 font-weight: 700;
                 letter-spacing: 2px;
@@ -348,7 +358,7 @@ class MainWindow(QMainWindow):
             }
             #nav_btn {
                 background: transparent;
-                color: #64748B;
+                color: #636E72;
                 border: none;
                 border-radius: 8px;
                 text-align: left;
@@ -357,26 +367,26 @@ class MainWindow(QMainWindow):
                 font-weight: 500;
             }
             #nav_btn:hover {
-                background: #111E35;
-                color: #94A3B8;
+                background: #E2E8F0;
+                color: #2D3436;
             }
             #nav_btn:checked {
-                background: #172554;
-                color: #60A5FA;
+                background: #E6F0FF;
+                color: #0066CC;
                 font-weight: 600;
             }
 
             /* ── 登出按鈕 ── */
             #logout_btn {
                 background: transparent;
-                color: #475569;
+                color: #636E72;
                 border: none;
                 text-align: left;
                 padding: 0 20px;
                 font-size: 13px;
             }
             #logout_btn:hover {
-                background: #1A0A0A;
-                color: #F87171;
+                background: #FFF5F5;
+                color: #DC3545;
             }
         """)

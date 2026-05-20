@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
     name          VARCHAR(50)  NOT NULL COMMENT '姓名',
     password_hash VARCHAR(255) NOT NULL COMMENT 'bcrypt 雜湊密碼',
     role          TINYINT      NOT NULL DEFAULT 1
-                  COMMENT '1=一般人員, 2=試劑負責人, 3=組長/技術主任',
+                  COMMENT '1=一般使用者, 2=試劑負責人, 3=組長/技術主任',
     is_active     BOOLEAN      NOT NULL DEFAULT TRUE,
     created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP

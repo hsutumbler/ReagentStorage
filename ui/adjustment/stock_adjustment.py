@@ -93,7 +93,7 @@ class StockAdjustmentPage(BasePage):
         if not ok:
             return
 
-        if not self.confirm(self, "確認刪除",
+        if not self.confirm("確認刪除",
                             f"確定要刪除 RID：{inv['rid']} 嗎？\n此操作將留下稽核記錄。"):
             return
 
@@ -108,5 +108,5 @@ class StockAdjustmentPage(BasePage):
             reason=reason,
         )
         InventoryModel.mark_adjusted(inv["inventory_id"])
-        self.alert(self, "完成", f"RID {inv['rid']} 已調整刪除")
+        self.alert("完成", f"RID {inv['rid']} 已調整刪除")
         self._search()

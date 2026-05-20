@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (
     QPushButton, QComboBox, QDateEdit, QTextEdit,
     QFrame, QTableWidgetItem, QHeaderView,
 )
-from PyQt6.QtCore import QDate
+from PyQt6.QtCore import QDate, Qt
 from ui.base_page import BasePage
 from database.models.vendor import VendorModel
 from database.models.reagent import ReagentModel
@@ -14,7 +14,7 @@ from database.models.nonconforming import NonConformingModel
 
 class NonConformingPage(BasePage):
     def __init__(self, user: dict):
-        super().__init__("不合格試劑處理", "記錄不合格試劑資訊（ISO 15189 要求）", user)
+        super().__init__("不合格試劑記錄", "記錄不合格試劑資訊", user)
         self._build()
 
     def _build(self):
@@ -22,63 +22,73 @@ class NonConformingPage(BasePage):
         card = QFrame()
         card.setObjectName("section_card")
         form_layout = QVBoxLayout(card)
-        form_layout.setSpacing(10)
+        form_layout.setSpacing(15)
+        form_layout.setContentsMargins(25, 25, 25, 25)
 
+        # 第一排：廠商、試劑、批號、效期
         row1 = QHBoxLayout()
+        row1.setSpacing(10)
+        
         row1.addWidget(QLabel("廠商 *"))
         self.cb_vendor = QComboBox()
         self.cb_vendor.addItem("— 請選擇廠商 —", None)
         for v in VendorModel.get_all():
             self.cb_vendor.addItem(v["vendor_name"], v["vendor_id"])
+        self.cb_vendor.setFixedWidth(140)
         self.cb_vendor.currentIndexChanged.connect(self._load_reagents)
         row1.addWidget(self.cb_vendor)
 
         row1.addWidget(QLabel("試劑 *"))
         self.cb_reagent = QComboBox()
-        self.cb_reagent.setMinimumWidth(200)
+        self.cb_reagent.addItem("— 請選擇試劑 —", None)
+        self.cb_reagent.setFixedWidth(160)
         row1.addWidget(self.cb_reagent)
+
+        row1.addWidget(QLabel("批號 *"))
+        self.f_lot = QLineEdit()
+        self.f_lot.setPlaceholderText("批號")
+        self.f_lot.setFixedWidth(110)
+        row1.addWidget(self.f_lot)
+
+        row1.addWidget(QLabel("穩定效期"))
+        self.f_expiry = QDateEdit()
+        self.f_expiry.setCalendarPopup(True)
+        self.f_expiry.setDate(QDate.currentDate())
+        self.f_expiry.setDisplayFormat("yyyy-MM-dd")
+        self.f_expiry.setFixedWidth(140)
+        row1.addWidget(self.f_expiry)
+        
         row1.addStretch()
         form_layout.addLayout(row1)
 
         self._load_reagents()
 
-        row2 = QHBoxLayout()
-        row2.addWidget(QLabel("批號 *"))
-        self.f_lot = QLineEdit()
-        self.f_lot.setPlaceholderText("批號")
-        row2.addWidget(self.f_lot)
-        row2.addWidget(QLabel("穩定效期"))
-        self.f_expiry = QDateEdit()
-        self.f_expiry.setCalendarPopup(True)
-        self.f_expiry.setDate(QDate.currentDate())
-        self.f_expiry.setDisplayFormat("yyyy-MM-dd")
-        row2.addWidget(self.f_expiry)
-        row2.addStretch()
-        form_layout.addLayout(row2)
-
+        # 第二排：不合格原因標題
         form_layout.addWidget(QLabel("不合格原因 *"))
-        self.f_reason = QTextEdit()
-        self.f_reason.setPlaceholderText("請詳述不合格原因…")
-        self.f_reason.setFixedHeight(80)
-        self.f_reason.setStyleSheet(
-            "background:#1a2535; border:1px solid #2d4060; border-radius:6px; "
-            "color:#d0e8ff; padding:8px; font-size:13px;"
-        )
-        form_layout.addWidget(self.f_reason)
 
-        btn_row = QHBoxLayout()
-        btn_row.addStretch()
+        # 第三排：原因輸入框 (全寬)
+        self.f_reason = QTextEdit()
+        self.f_reason.setPlaceholderText("請詳述不合格原因...")
+        self.f_reason.setFixedHeight(100)
+        form_layout.addWidget(self.f_reason)
+        
+        # 第四排：儲存按鈕 (居中)
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
         btn_save = QPushButton("✔  儲存記錄")
         btn_save.setObjectName("btn_primary")
+        btn_save.setFixedWidth(160)
+        btn_save.setFixedHeight(45)
         btn_save.clicked.connect(self._save)
-        btn_row.addWidget(btn_save)
-        form_layout.addLayout(btn_row)
+        btn_layout.addWidget(btn_save)
+        btn_layout.addStretch()
+        form_layout.addLayout(btn_layout)
 
         self.content_layout.addWidget(card)
 
         # ── 最近記錄 ──
         lbl = QLabel("最近不合格記錄")
-        lbl.setStyleSheet("color:#60c0ff; font-weight:bold; font-size:14px;")
+        lbl.setStyleSheet("color:#2D3436; font-weight:bold; font-size:14px;")
         self.content_layout.addWidget(lbl)
 
         headers = ["廠商", "試劑名稱", "批號", "穩定效期", "不合格原因", "紀錄時間", "紀錄人員"]
@@ -127,7 +137,7 @@ class NonConformingPage(BasePage):
             lot_number=lot_number, expiry_date=expiry,
             nc_reason=reason, recorded_by=self.user["user_id"],
         )
-        self.alert(self, "完成", "不合格試劑記錄已儲存")
+        self.alert("完成", "不合格試劑記錄已儲存")
         self.f_lot.clear()
         self.f_reason.clear()
         self._load_recent()

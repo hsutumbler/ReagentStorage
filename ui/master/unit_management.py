@@ -11,15 +11,11 @@ from database.models.unit_conversion import UnitConversionModel
 
 class UnitManagementPage(BasePage):
     def __init__(self, user: dict):
-        super().__init__("單位換算管理", "設定入庫、盤點、出庫單位及換算比例", user)
+        super().__init__("單位換算", "設定入庫、盤點、出庫單位及換算比例", user)
         self._build()
 
     def _build(self):
         toolbar = QHBoxLayout()
-        btn_import = QPushButton("📥 匯入 Excel")
-        btn_import.clicked.connect(self._import_excel)
-        toolbar.addWidget(btn_import)
-
         btn_add = QPushButton("＋ 新增單位換算")
         btn_add.setObjectName("btn_primary")
         btn_add.clicked.connect(self._add_unit)
@@ -48,38 +44,6 @@ class UnitManagementPage(BasePage):
 
         self._load_data()
 
-    def _import_excel(self):
-        """匯入單位換算 Excel。"""
-        msg = QMessageBox(None)
-        msg.setWindowTitle("Excel 匯入")
-        msg.setText("請選擇操作：")
-        btn_download = msg.addButton("下載範本", QMessageBox.ButtonRole.ActionRole)
-        btn_import = msg.addButton("選取檔案匯入", QMessageBox.ButtonRole.AcceptRole)
-        msg.addButton("取消", QMessageBox.ButtonRole.RejectRole)
-        msg.exec()
-
-        if msg.clickedButton() == btn_download:
-            path, _ = QFileDialog.getSaveFileName(None, "儲存範本", "單位換算匯入範本.xlsx", "Excel Files (*.xlsx)")
-            if path:
-                if ExcelService.generate_unit_template(path):
-                    self.alert("完成", "範本已儲存，請填寫後再行匯入。")
-                else:
-                    self.warn("失敗", "無法儲存範本，請檢查檔案是否已被開啟或資料夾權限。")
-        
-        elif msg.clickedButton() == btn_import:
-            path, _ = QFileDialog.getOpenFileName(None, "選取 Excel 檔案", "", "Excel Files (*.xlsx *.xls)")
-            if path:
-                s, f, err = ExcelService.import_units(path)
-                result_msg = f"匯入完成！\n成功：{s} 筆\n失敗：{f} 筆"
-                if err:
-                    result_msg += f"\n\n錯誤詳情：\n{err}"
-                
-                if f > 0:
-                    QMessageBox.warning(None, "匯入結果", result_msg)
-                else:
-                    self.alert("匯入成功", result_msg)
-                self._load_data()
-
     def _load_data(self):
         # 防止在匯入後 UI 物件已失效（Mac 偶發 Bug）
         try:
@@ -101,6 +65,7 @@ class UnitManagementPage(BasePage):
             # 操作按鈕容器
             from PyQt6.QtWidgets import QWidget, QHBoxLayout
             action_widget = QWidget()
+            action_widget.setStyleSheet("background: transparent;")
             action_layout = QHBoxLayout(action_widget)
             action_layout.setContentsMargins(10, 0, 10, 0)
             action_layout.setSpacing(12)
@@ -190,12 +155,14 @@ class UnitDialog(QDialog):
         self.f_s2c = QDoubleSpinBox()
         self.f_s2c.setRange(0.1, 99999)
         self.f_s2c.setDecimals(1)
+        self.f_s2c.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
         self.f_s2c.setValue(float(unit["stock_to_count"]) if unit else 1.0)
 
         # 改為顯示/輸入 入庫 -> 出庫 的總比值
         self.f_s2i = QDoubleSpinBox()
         self.f_s2i.setRange(0.1, 999999)
         self.f_s2i.setDecimals(1)
+        self.f_s2i.setButtonSymbols(QDoubleSpinBox.ButtonSymbols.NoButtons)
         if unit:
             total = float(unit["stock_to_count"] * unit["count_to_issue"])
             self.f_s2i.setValue(total)
@@ -209,12 +176,6 @@ class UnitDialog(QDialog):
         completer.setCaseSensitivity(__import__("PyQt6.QtCore").QtCore.Qt.CaseSensitivity.CaseInsensitive)
         completer.setFilterMode(__import__("PyQt6.QtCore").QtCore.Qt.MatchFlag.MatchContains)
         self.f_name.setCompleter(completer)
-
-        for w in [self.f_s2c, self.f_s2i]:
-            w.setStyleSheet(
-                "background:#1a2535; border:1px solid #2d4060; "
-                "border-radius:6px; color:#d0e8ff; padding:7px 10px;"
-            )
 
         form.addRow("換算名稱 *", self.f_name)
         form.addRow("入庫單位 *", self.f_stock)

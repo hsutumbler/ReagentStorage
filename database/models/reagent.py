@@ -6,7 +6,7 @@ from database.connection import DBContext
 class ReagentModel:
 
     @staticmethod
-    def get_all(active_only=True) -> list[dict]:
+    def get_all(active_only=True, vendor_id=None) -> list[dict]:
         sql = """
             SELECT DISTINCT r.*, r.safety_stock as reagent_safety_stock, 
                    v.vendor_name, d.dept_name, u.unit_name,
@@ -16,12 +16,18 @@ class ReagentModel:
             LEFT JOIN vendors v ON r.vendor_id = v.vendor_id
             LEFT JOIN departments d ON r.dept_id = d.dept_id
             LEFT JOIN unit_conversions u ON r.unit_id = u.unit_id
+            WHERE 1=1
         """
+        params = []
         if active_only:
-            sql += " WHERE r.is_active=TRUE"
+            sql += " AND r.is_active=TRUE"
+        if vendor_id:
+            sql += " AND r.vendor_id=%s"
+            params.append(vendor_id)
+            
         sql += " ORDER BY r.reagent_name"
         with DBContext() as (_, c):
-            c.execute(sql)
+            c.execute(sql, params)
             rows = c.fetchall()
             # 確保字典中的 safety_stock 來自 reagent 表
             for row in rows:
@@ -50,17 +56,22 @@ class ReagentModel:
             return row
 
     @staticmethod
-    def get_by_vendor_dept(vendor_id: int, dept_id: int) -> list[dict]:
-        """供訂單頁面使用：查詢特定廠商+組別的試劑。"""
+    def get_by_vendor_dept(vendor_id: int, dept_id: int = None) -> list[dict]:
+        """供訂單頁面使用：查詢特定廠商的試劑（可選組別）。"""
         sql = """
             SELECT r.*, r.safety_stock, u.count_unit, u.stock_unit, u.stock_to_count
             FROM reagents r
             LEFT JOIN unit_conversions u ON r.unit_id = u.unit_id
-            WHERE r.vendor_id=%s AND r.dept_id=%s AND r.is_active=TRUE
-            ORDER BY r.reagent_name
+            WHERE r.vendor_id=%s AND r.is_active=TRUE
         """
+        params = [vendor_id]
+        if dept_id:
+            sql += " AND r.dept_id=%s"
+            params.append(dept_id)
+            
+        sql += " ORDER BY r.reagent_name"
         with DBContext() as (_, c):
-            c.execute(sql, (vendor_id, dept_id))
+            c.execute(sql, params)
             return c.fetchall()
 
     @staticmethod
