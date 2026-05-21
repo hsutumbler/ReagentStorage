@@ -90,7 +90,7 @@ class UnitManagementPage(BasePage):
             with DBContext() as (_, c):
                 # 1. 插入單位換算
                 c.execute(
-                    "(unit_name,stock_unit,count_unit,issue_unit,stock_to_count,count_to_issue) "
+                    "INSERT INTO unit_conversions (unit_name,stock_unit,count_unit,issue_unit,stock_to_count,count_to_issue) "
                     "VALUES (%s,%s,%s,%s,%s,%s)",
                     (d["unit_name"], d["stock_unit"], d["count_unit"],
                      d["issue_unit"], d["stock_to_count"], d["count_to_issue"]),

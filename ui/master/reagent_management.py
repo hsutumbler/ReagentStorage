@@ -73,6 +73,37 @@ class ReagentManagementPage(BasePage):
 
         self._load_data()
 
+    def on_page_show(self):
+        """當頁面顯示時，刷新下拉選單，確保剛新增的廠商/組別能出現"""
+        self._refresh_filters()
+        self._load_data()
+
+    def _refresh_filters(self):
+        self.cb_vendor.blockSignals(True)
+        self.cb_dept.blockSignals(True)
+        
+        curr_vendor = self.cb_vendor.currentData()
+        curr_dept = self.cb_dept.currentData()
+        
+        self.cb_vendor.clear()
+        self.cb_vendor.addItem("全部", None)
+        for v in VendorModel.get_all():
+            self.cb_vendor.addItem(v["vendor_name"], v["vendor_id"])
+            
+        self.cb_dept.clear()
+        self.cb_dept.addItem("全部", None)
+        for d in ReagentModel.get_all_departments():
+            self.cb_dept.addItem(d["dept_name"], d["dept_id"])
+            
+        idx_v = self.cb_vendor.findData(curr_vendor)
+        if idx_v >= 0: self.cb_vendor.setCurrentIndex(idx_v)
+        
+        idx_d = self.cb_dept.findData(curr_dept)
+        if idx_d >= 0: self.cb_dept.setCurrentIndex(idx_d)
+        
+        self.cb_vendor.blockSignals(False)
+        self.cb_dept.blockSignals(False)
+
     def _import_excel(self):
         """匯入試劑主檔 Excel。"""
         # 詢問是要下載範本還是匯入

@@ -14,11 +14,25 @@ class InventoryModel:
                 "INSERT INTO inventory "
                 "(rid, reagent_id, lot_number, expiry_date, received_date, "
                 " received_by, receive_mode, po_id) "
-                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
+                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s)",
                 (rid, reagent_id, lot_number, expiry_date, received_date,
                  received_by, receive_mode, po_id),
             )
             return c.lastrowid
+
+    @staticmethod
+    def get_receipt_history(po_id: int, reagent_id: int) -> list[dict]:
+        """查詢特定訂購單內，某項試劑的歷史分批入庫紀錄。"""
+        with DBContext() as (_, c):
+            c.execute(
+                "SELECT lot_number, expiry_date, COUNT(*) as received_qty "
+                "FROM inventory "
+                "WHERE po_id=%s AND reagent_id=%s "
+                "GROUP BY lot_number, expiry_date "
+                "ORDER BY MIN(received_date), lot_number",
+                (po_id, reagent_id),
+            )
+            return c.fetchall()
 
     @staticmethod
     def get_by_rid(rid: str) -> dict | None:
@@ -237,7 +251,7 @@ class InventoryModel:
         """取得所有目前庫存低於安全庫存量的試劑清單。優先採用單位換算設定的安全庫存。"""
         sql = """
             SELECT r.reagent_id, r.reagent_name, r.item_number,
-                   u.safety_stock, 
+                   r.safety_stock, 
                    u.count_unit, u.stock_to_count, d.dept_name,
                    COUNT(i.inventory_id) AS current_stock_bottles,
                    COUNT(i.inventory_id) * COALESCE(u.stock_to_count, 1) AS current_stock_count
@@ -246,9 +260,9 @@ class InventoryModel:
             LEFT JOIN inventory i ON r.reagent_id = i.reagent_id AND i.status = 0
             JOIN departments d ON r.dept_id = d.dept_id
             GROUP BY r.reagent_id, r.reagent_name, r.item_number,
-                     u.safety_stock, u.count_unit, u.stock_to_count, d.dept_name
-            HAVING current_stock_count <= u.safety_stock
-            ORDER BY (u.safety_stock - current_stock_count) DESC, r.reagent_name
+                     r.safety_stock, u.count_unit, u.stock_to_count, d.dept_name
+            HAVING current_stock_count <= r.safety_stock
+            ORDER BY (r.safety_stock - current_stock_count) DESC, r.reagent_name
         """
         with DBContext() as (_, c):
             c.execute(sql)

@@ -64,7 +64,7 @@ class BatchReceivePage(BasePage):
         # 平均分配所有欄寬，但操作欄固定
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.horizontalHeader().setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
-        self.table.setColumnWidth(6, 90)
+        self.table.setColumnWidth(6, 100)
         
         # 設定預設行高
         self.table.verticalHeader().setDefaultSectionSize(45)
@@ -126,10 +126,6 @@ class BatchReceivePage(BasePage):
             self.lbl_po_info.setText(
                 f"⚠️ <b style='color:#ff6b6b;'>此訂購單 ({code}) 已於 {recv_date} 全數入庫結案</b>"
             )
-        elif po["status"] == 1:
-            self.lbl_po_info.setText(
-                f"⚠️ <b style='color:#ff9f43;'>此訂購單 ({code}) 為「部分入庫」狀態，請繼續補齊剩餘試劑</b>"
-            )
         else:
             self.lbl_po_info.setText(
                 f"廠商：{po['vendor_name']}  |  組別：{po['dept_name']}  |  "
@@ -143,13 +139,22 @@ class BatchReceivePage(BasePage):
         self._po_items = items
         self.table.setRowCount(0)
 
+        from database.models.inventory import InventoryModel
         for item in items:
             ordered = item["ordered_qty"]
             received = item.get("received_qty") or 0
             
-            # 如果已有入庫紀錄，先產生一行唯讀的歷史紀錄
+            # 查詢歷史收貨分批情況並個別列出
             if received > 0:
-                self._add_item_row(item, received, is_readonly=True, lot=item.get("lot_number") or "", exp=item.get("expiry_date"))
+                history = InventoryModel.get_receipt_history(po["po_id"], item["reagent_id"])
+                for h in history:
+                    self._add_item_row(
+                        item, 
+                        h["received_qty"], 
+                        is_readonly=True, 
+                        lot=h["lot_number"], 
+                        exp=h["expiry_date"]
+                    )
             
             # 如果還沒收滿，且未結案，產生待收數量行
             if po["status"] != 2 and received < ordered:
@@ -159,8 +164,12 @@ class BatchReceivePage(BasePage):
             if po["status"] == 2 and received == 0:
                 self._add_item_row(item, 0, is_readonly=True)
 
-    def _add_item_row(self, item, qty, is_readonly, lot="", exp=None):
-        r = self.table.rowCount()
+    def _add_item_row(self, item, qty, is_readonly, lot="", exp=None, insert_at_row=None):
+        if insert_at_row is None:
+            r = self.table.rowCount()
+        else:
+            r = insert_at_row
+        
         self.table.insertRow(r)
         self.table.setRowHeight(r, 45)
 
@@ -238,15 +247,12 @@ class BatchReceivePage(BasePage):
         
         # 4. 操作 (拆分按鈕)
         action_widget = QWidget()
+        action_widget.setStyleSheet("background: transparent; border: none;")
         action_layout = QHBoxLayout(action_widget)
-        action_layout.setContentsMargins(0, 0, 0, 0)
+        action_layout.setContentsMargins(4, 4, 4, 4)
         action_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         if not is_readonly:
-            btn_split = QPushButton("➕ 拆分")
-            btn_split.setStyleSheet("""
-                QPushButton { color: #0066CC; font-weight: bold; border: none; background: transparent; }
-                QPushButton:hover { background: rgba(0, 102, 204, 0.1); border-radius: 4px; }
-            """)
+            btn_split = self.make_table_btn("+ 拆分", "primary")
             btn_split.clicked.connect(lambda _, current_item=item: self._split_row(current_item))
             action_layout.addWidget(btn_split)
         else:
@@ -257,8 +263,22 @@ class BatchReceivePage(BasePage):
         self.table.setCellWidget(r, 6, action_widget)
 
     def _split_row(self, item):
-        # 找到被點擊按鈕所屬的 item，在表格最後新增一行
-        self._add_item_row(item, 0, is_readonly=False)
+        # 找到被點擊按鈕所屬的列，將新拆分的列直接插在它下方
+        sender = self.sender()
+        insert_idx = self.table.rowCount()
+        if sender:
+            for r in range(self.table.rowCount()):
+                action_widget = self.table.cellWidget(r, 6)
+                if action_widget and action_widget.layout():
+                    for i in range(action_widget.layout().count()):
+                        if action_widget.layout().itemAt(i).widget() == sender:
+                            insert_idx = r + 1
+                            break
+                    else:
+                        continue
+                    break
+                    
+        self._add_item_row(item, 0, is_readonly=False, insert_at_row=insert_idx)
 
     def _do_batch_receive(self):
         if not self._po:

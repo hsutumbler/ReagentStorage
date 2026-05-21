@@ -166,6 +166,11 @@ class PurchaseOrderPage(BasePage):
             self.warn("提示", "請先載入試劑清單")
             return
 
+        dept_id = self.cb_dept.currentData()
+        if not dept_id:
+            self.warn("提示", "每張訂購單必須綁定所屬組別，請於上方下拉選單選擇特定「組別」後，重新載入並訂購。")
+            return
+
         # 收集有訂購數量的項目
         order_items = []
         for r, rg in enumerate(self._reagents):

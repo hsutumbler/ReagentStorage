@@ -2,6 +2,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout, QLabel, QComboBox, QPushButton, QTableWidgetItem, QFileDialog
 )
 from PyQt6.QtGui import QColor, QTextDocument, QPageLayout, QPageSize
+from PyQt6.QtCore import QMarginsF
 from PyQt6.QtPrintSupport import QPrinter
 from ui.base_page import BasePage
 from database.models.vendor import VendorModel
@@ -50,7 +51,7 @@ class StockCountPage(BasePage):
         row.addStretch()
         self.content_layout.addLayout(row)
 
-        headers = ["試劑名稱", "料號", "組別", "廠商", "目前庫存", "安全庫存", "盤點單位"]
+        headers = ["試劑名稱", "料號", "組別", "廠商", "安全庫存", "目前庫存", "盤點單位"]
         self.table = self.make_table(headers)
         self.content_layout.addWidget(self.table)
         self._search()
@@ -86,7 +87,7 @@ class StockCountPage(BasePage):
             row_data = [
                 rg["reagent_name"], rg["item_number"] or "",
                 rg["dept_name"], rg["vendor_name"],
-                f"{stock_count:.1f}", f"{safety_count:.1f}", unit
+                f"{safety_count:.1f}", f"{stock_count:.1f}", unit
             ]
             self._data.append(row_data)
 
@@ -115,20 +116,30 @@ class StockCountPage(BasePage):
         <html>
         <head>
             <style>
-                h1 {{ text-align: center; font-family: sans-serif; }}
-                table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
-                th, td {{ border: 1px solid #333; padding: 8px; text-align: left; font-size: 12px; }}
-                th {{ background-color: #f2f2f2; }}
-                .footer {{ margin-top: 20px; font-size: 10px; color: #666; text-align: right; }}
+                body {{ font-family: sans-serif; font-size: 12pt; margin: 0; padding: 0; }}
+                h1 {{ text-align: center; font-size: 18pt; margin-top: 20px; margin-bottom: 30px; letter-spacing: 5px; font-weight: bold; }}
+                .info {{ font-size: 12pt; margin-bottom: 15px; }}
+                table {{ width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid #000; }}
+                th, td {{ padding: 10px 5px; text-align: center; font-size: 11pt; border: 1px solid #000; }}
+                th {{ background-color: #f2f2f2; font-weight: bold; }}
+                .note-line {{ display: inline-block; width: 85%; border-bottom: 1px solid #000; margin-left: 10px; }}
+                .footer {{ margin-top: 40px; font-size: 12pt; text-align: left; }}
             </style>
         </head>
         <body>
-            <h1>庫存盤點報表</h1>
-            <p>列印時間：{now} &nbsp;&nbsp; 盤點人員：{self.user.get('name', 'N/A')}</p>
-            <table>
+            <h1>庫 存 盤 點 報 表</h1>
+            <div class="info">
+                列印時間：{now} &nbsp;&nbsp;&nbsp;&nbsp; 盤點人員：{self.user.get('name', 'N/A')}
+            </div>
+            <table width="100%" border="1" cellspacing="0" cellpadding="8" bordercolor="#000000">
                 <tr>
-                    <th>試劑名稱</th><th>料號</th><th>組別</th><th>廠商</th>
-                    <th>目前庫存</th><th>安全庫存</th><th>單位</th>
+                    <th style="width: 25%;">試劑名稱</th>
+                    <th style="width: 15%;">料號</th>
+                    <th style="width: 15%;">組別</th>
+                    <th style="width: 15%;">廠商</th>
+                    <th style="width: 12%;">安全庫存</th>
+                    <th style="width: 12%;">目前庫存</th>
+                    <th style="width: 6%;">單位</th>
                 </tr>
         """
         for row in self._data:
@@ -136,19 +147,23 @@ class StockCountPage(BasePage):
         
         html += """
             </table>
-            <div class="footer">系統產生之自動稽核報表</div>
+            <div class="footer">
+                備註：<span class="note-line"></span>
+            </div>
         </body>
         </html>
         """
 
         doc = QTextDocument()
+        doc.setDocumentMargin(0)
         doc.setHtml(html)
 
-        printer = QPrinter(QPrinter.PrinterMode.HighResolution)
+        printer = QPrinter(QPrinter.PrinterMode.ScreenResolution)
         printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
         printer.setOutputFileName(path)
         printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
-        printer.setPageMargins(QPageLayout.Margins(15, 15, 15, 15), QPageLayout.Unit.Millimeter)
+        # 設定邊界：左右 5mm，上方 0mm，下方 10mm
+        printer.setPageMargins(QMarginsF(5, 0, 5, 10), QPageLayout.Unit.Millimeter)
 
         doc.print(printer)
         self.alert("列印成功", f"盤點報表已儲存至：\n{path}")

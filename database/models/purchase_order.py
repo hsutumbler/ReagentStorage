@@ -43,9 +43,7 @@ class PurchaseOrderModel:
     def get_items(po_id: int) -> list[dict]:
         with DBContext() as (_, c):
             c.execute(
-                "SELECT poi.*, r.reagent_name, r.item_number, u.stock_unit, "
-                "       (SELECT lot_number FROM inventory WHERE po_id=poi.po_id AND reagent_id=poi.reagent_id LIMIT 1) as lot_number, "
-                "       (SELECT expiry_date FROM inventory WHERE po_id=poi.po_id AND reagent_id=poi.reagent_id LIMIT 1) as expiry_date "
+                "SELECT poi.*, r.reagent_name, r.item_number, u.stock_unit "
                 "FROM purchase_order_items poi "
                 "JOIN reagents r ON poi.reagent_id = r.reagent_id "
                 "LEFT JOIN unit_conversions u ON r.unit_id = u.unit_id "

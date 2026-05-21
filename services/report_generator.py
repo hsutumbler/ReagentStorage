@@ -57,13 +57,16 @@ class ReportGenerator:
             painter.setPen(solid_pen)
 
             # ── 開始繪製 ──
+            # 將畫布整體向右平移 5mm (0.5公分) 以確保左側邊距
+            margin_left = _mm(5)
+            painter.translate(margin_left, 0)
             
             # 1. 繪製條碼與文字 (右上角，中央對齊)
             img = QImage(actual_barcode_path)
             bw = _mm(45) # 寬 4.5 公分
             bh = _mm(7)  # 高 0.7 公分
-            # 條碼置於右上
-            bx = int(w - bw)
+            # 條碼置於右上 (扣除 margin_left 確保不會超出右側邊界)
+            bx = int(w - bw - margin_left)
             by = 0
             painter.drawImage(QRect(bx, by, int(bw), int(bh)), img)
             
@@ -71,9 +74,9 @@ class ReportGenerator:
             set_font(3)
             painter.drawText(bx, int(bh + _mm(1)), int(bw), int(_mm(5)), Qt.AlignmentFlag.AlignCenter, po_data["po_code"])
 
-            # 2. 標題
+            # 2. 標題 (因為已經 translate，w 需扣除平移量來置中)
             set_font(8, True)
-            painter.drawText(0, _mm(20), int(w), _mm(12), Qt.AlignmentFlag.AlignCenter, "試 劑 訂 購 單")
+            painter.drawText(0, _mm(20), int(w - margin_left), _mm(12), Qt.AlignmentFlag.AlignCenter, "試 劑 訂 購 單")
             
             # 3. 基本資訊
             set_font(4.5)
