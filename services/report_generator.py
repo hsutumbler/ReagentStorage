@@ -57,8 +57,8 @@ class ReportGenerator:
             painter.setPen(solid_pen)
 
             # ── 開始繪製 ──
-            # 將畫布整體向右平移 5mm (0.5公分) 以確保左側邊距
-            margin_left = _mm(5)
+            # 將畫布整體向右平移 10mm (1.0公分) 以確保左側邊距
+            margin_left = _mm(10)
             painter.translate(margin_left, 0)
             
             # 1. 繪製條碼與文字 (右上角，中央對齊)

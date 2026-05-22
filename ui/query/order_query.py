@@ -93,7 +93,7 @@ class OrderQueryPage(BasePage):
     def _reprint_po(self, po):
         try:
             print_po_label(po["po_code"], po["vendor_name"])
-            self.alert("成功", f"標籤已送至 Zebra 印表機")
+            # self.alert("成功", f"標籤已送至 Zebra 印表機") # 依要求移除成功彈窗
         except Exception as e:
             self.warn( "列印失敗", str(e))
 
@@ -104,7 +104,7 @@ class OrderQueryPage(BasePage):
         if filename:
             success = ReportGenerator.generate_po_pdf(po, filename)
             if success:
-                self.alert("成功", f"訂購單 PDF 已儲存至：\n{filename}")
+                # self.alert("成功", f"訂購單 PDF 已儲存至：\n{filename}") # 移除成功彈窗
                 import os
                 # macOS 開啟 PDF
                 os.system(f"open '{filename}'")

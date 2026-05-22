@@ -67,7 +67,7 @@ def print_receive_label_large(
     lot_short  = lot_number[:24]
 
     border_zpl = f"^FO0,0^GB{_LW},{_LH},{_f(6)},B,0^FS" if is_new_lot else ""
-    new_lot_text = f"^FO{_LW - _f(80)},{_f(75)}^CF0,{_f(22)}^FD[NEW]^FS" if is_new_lot else ""
+    new_lot_text = f"^FO{_LW - _f(90)},{_f(70)}^CF0,{_f(28)}^FD[NEW]^FS" if is_new_lot else ""
 
     zpl = f"""^XA
 ^PW{_LW}
@@ -75,28 +75,30 @@ def print_receive_label_large(
 ^CI28
 {border_zpl}
 
-^FO{margin},{_f(10)}
-^BCN,{_f(55)},N,N,N
+^FO{_f(22)},{_f(10)}
+^BY2,2.0,{_f(65)}
+^BCN,{_f(65)},N,N,N
 ^FD{rid}^FS
 
 ^FO{margin},{_f(75)}
 ^CF0,{_f(22)}
-^FD{rid}{new_lot_text}^FS
+^FD{rid}^FS
+{new_lot_text}
 
 ^FO{margin},{_f(115)}
-^CF0,{_f(20)}
+^CF0,{_f(28)}
 ^FDReagent: {name_short}^FS
 
 ^FO{margin},{_f(155)}
-^CF0,{_f(20)}
+^CF0,{_f(24)}
 ^FDLot: {lot_short}^FS
 
 ^FO{margin},{_f(195)}
-^CF0,{_f(20)}
+^CF0,{_f(24)}
 ^FDExp: {expiry_date}^FS
 
 ^FO{margin},{_f(235)}
-^CF0,{_f(20)}
+^CF0,{_f(24)}
 ^FDRecv: {received_date}^FS
 
 ^PQ{copies},0,1,Y
@@ -107,26 +109,36 @@ def print_receive_label_large(
 # ── 入庫 — QR Code 2-in-1 輔助函式 ────────────────────────
 
 def _get_qr_block_zpl(x_offset: int, rid: str, name: str, lot: str, exp: str, recv: str, is_new: bool) -> str:
-    name_short = name[:14]
+    name_short = f"{name[:8]}[NEW]" if is_new else name[:14]
     recv_fmt = recv.replace('-', '/')
-    qr_x = x_offset + (_f(200) - _f(128)) // 2
-    qr_y = _f(5)
+    
+    # 依 Blueprint：黑點實體起於 4mm (32 dots)
+    # Magnification=3，白邊=12 dots。所以 qr_xy = 32 - 12 = 20 dots
+    qr_x = x_offset + _f(20)
+    qr_y = _f(20)
+    
+    # 微調向右平移 8 dots (1mm)，達成絕對水平置中
+    qr_x = x_offset + _f(34)
+    qr_y = _f(16)
+    
+    # 遮罩方塊同步平移
     box_size = _f(32)
-    box_x = qr_x + (_f(128) - box_size) // 2
-    box_y = qr_y + (_f(128) - box_size) // 2
+    box_x = x_offset + _f(92)
+    box_y = _f(74)
+    
     qr_data = f"{rid}|{name}|{lot}|{exp}|{recv}"
     border = f"^FO{x_offset},0^GB{_f(200)},{_SH},{_f(4)},B,0^FS" if is_new else ""
-    new_mark = f"^FO{x_offset + _f(170)},{_f(6)}^CF0,{_f(14)}^FDNEW^FS" if is_new else ""
+    new_mark = ""
     
     return f"""
 {border}
-^FO{qr_x},{qr_y}^BQN,2,4,H^FDMA,{qr_data}^FS
+^FO{qr_x},{qr_y}^BQN,2,4^FDMA,{qr_data}^FS
 ^FO{box_x},{box_y}^GB{box_size},{box_size},{box_size},W,0^FS
 ^FO{box_x + _f(2)},{box_y + _f(4)}^CF0,{_f(20)}^FDIN^FS
 {new_mark}
-^FO{x_offset},{_f(155)}^CF0,{_f(18)}^FB{_f(200)},1,0,C^FD{name_short}^FS
-^FO{x_offset},{_f(175)}^CF0,{_f(18)}^FB{_f(200)},1,0,C^FDLot:{lot[:12]}^FS
-^FO{x_offset},{_f(205)}^CF0,{_f(18)}^FB{_f(200)},1,0,C^FDRecv:{recv_fmt}^FS
+^FO{x_offset},{_f(170)}^CF0,{_f(28)}^FB{_f(200)},1,0,C^FD{name_short}^FS
+^FO{x_offset},{_f(200)}^CF0,{_f(24)}^FB{_f(200)},1,0,C^FDLot:{lot[:12]}^FS
+^FO{x_offset},{_f(230)}^CF0,{_f(24)}^FB{_f(200)},1,0,C^FDRecv:{recv_fmt}^FS
 """
 
 
@@ -141,7 +153,7 @@ def print_receive_label_qr(
 ) -> None:
     """單次列印：在 5cm 標籤上印出單張 QR (位於左側)。"""
     block_l = _get_qr_block_zpl(0, rid, reagent_name, lot_number, expiry_date, received_date, is_new_lot)
-    zpl = f"^XA^PW{_SW}^LL{_SH}^CI28{block_l}^FO{_f(199)},0^GB1,{_SH},1,B,0^FS^PQ{copies},0,1,Y^XZ"
+    zpl = f"^XA^BY2,2,1^PW{_SW}^LL{_SH}^CI28^CW1,E:WTCHT.TTF{block_l}^FO{_f(199)},0^GB1,{_SH},1,B,0^FS^PQ{copies},0,1,Y^XZ"
     _send_zpl(zpl)
 
 
@@ -154,7 +166,7 @@ def print_receive_batch_qr(items: list) -> None:
         if i + 1 < len(items):
             item_r = items[i+1]
             block_r = _get_qr_block_zpl(_f(200), **item_r)
-        zpl = f"^XA^PW{_SW}^LL{_SH}^CI28{block_l}{block_r}^FO{_f(199)},0^GB1,{_SH},1,B,0^FS^PQ1,0,1,Y^XZ"
+        zpl = f"^XA^BY2,2,1^PW{_SW}^LL{_SH}^CI28^CW1,E:WTCHT.TTF{block_l}{block_r}^FO{_f(199)},0^GB1,{_SH},1,B,0^FS^PQ1,0,1,Y^XZ"
         _send_zpl(zpl)
 
 
@@ -173,12 +185,13 @@ def print_issue_label_large(
     name_short = reagent_name[:20]
     lot_short  = lot_number[:24]
     zpl = f"""^XA^PW{_LW}^LL{_LH}^CI28
-^FO{margin},{_f(20)}^CF0,{_f(26)}^FDReagent: {name_short}^FS
-^FO{margin},{_f(60)}^CF0,{_f(22)}^FDRID: {rid}^FS
-^FO{margin},{_f(100)}^CF0,{_f(20)}^FDLot: {lot_short}^FS
-^FO{margin},{_f(140)}^CF0,{_f(20)}^FDOpen Exp: {open_expiry_date}^FS
-^FO{margin},{_f(180)}^CF0,{_f(20)}^FDIssued: {issued_date}^FS
-^FO{margin},{_f(220)}^CF0,{_f(20)}^FDIssued By: {issued_by}^FS
+^CW1,E:WTCHT.TTF
+^FO{margin},{_f(20)}^A1N,{_f(28)},{_f(28)}^FDReagent: {name_short}^FS
+^FO{margin},{_f(65)}^CF0,{_f(24)}^FDRID: {rid}^FS
+^FO{margin},{_f(105)}^CF0,{_f(24)}^FDLot: {lot_short}^FS
+^FO{margin},{_f(145)}^CF0,{_f(24)}^FDOpen Exp: {open_expiry_date}^FS
+^FO{margin},{_f(185)}^CF0,{_f(24)}^FDIssued: {issued_date}^FS
+^FO{margin},{_f(225)}^A1N,{_f(24)},{_f(24)}^FDIssued By: {issued_by}^FS
 ^PQ{copies},0,1,Y^XZ"""
     _send_zpl(zpl)
 
@@ -187,20 +200,27 @@ def print_issue_label_large(
 
 def _get_issue_block_zpl(x: int, rid: str, name: str, lot: str, exp: str, recv: str, by: str) -> str:
     name_short = name[:14]
-    qr_x = x + (_f(200) - _f(128)) // 2
-    qr_y = _f(2)
-    box_x = qr_x + (_f(128) - _f(32)) // 2
-    box_y = qr_y + (_f(128) - _f(32)) // 2
+    
+    # 依 Blueprint：實體黑邊左距 4mm(32 dots)、上距 4mm(32 dots)
+    qr_x = x + _f(34)
+    qr_y = _f(16)
+    
+    box_size = _f(32)
+    box_x = x + _f(92)
+    box_y = _f(74)
+    
+    recv_fmt = recv[:10].replace('-', '/')
+    exp_fmt = exp[:10].replace('-', '/')
     
     qr_data = f"OUT|{rid}|{name}|{lot}|{exp}|{recv}"
     return f"""
-^FO{qr_x},{qr_y}^BQN,2,4,H^FDMA,{qr_data}^FS
-^FO{box_x},{box_y}^GB{_f(32)},{_f(32)},{_f(32)},W,0^FS
+^FO{qr_x},{qr_y}^BQN,2,4^FDMA,{qr_data}^FS
+^FO{box_x},{box_y}^GB{box_size},{box_size},{box_size},W,0^FS
 ^FO{box_x + _f(2)},{box_y + _f(4)}^CF0,{_f(18)}^FDOUT^FS
-^FO{x},{_f(165)}^CF0,{_f(18)}^FB{_f(200)},1,0,C^FD{name_short}^FS
-^FO{x},{_f(187)}^CF0,{_f(18)}^FB{_f(200)},1,0,C^FDIssued:{recv.replace('-', '/')}^FS
-^FO{x},{_f(209)}^CF0,{_f(18)}^FB{_f(200)},1,0,C^FDOpen Exp:{exp.replace('-', '/')}^FS
-^FO{x},{_f(231)}^CF0,{_f(18)}^FB{_f(200)},1,0,C^FDIssued By:{by}^FS
+^FO{x},{_f(160)}^CF0,{_f(28)}^FB{_f(200)},1,0,C^FD{name_short}^FS
+^FO{x},{_f(188)}^CF0,{_f(24)}^FB{_f(200)},1,0,C^FD{recv_fmt}^FS
+^FO{x},{_f(216)}^CF0,{_f(24)}^FB{_f(200)},1,0,C^FD{exp_fmt}^FS
+^FO{x},{_f(244)}^CF0,{_f(24)}^FB{_f(200)},1,0,C^FD{by}^FS
 """
 
 def print_issue_label_qr(
@@ -214,7 +234,7 @@ def print_issue_label_qr(
 ) -> None:
     """單次列印：在左側印一張。"""
     block_l = _get_issue_block_zpl(0, rid, reagent_name, lot_number, open_expiry_date, issued_date, issued_by)
-    zpl = f"^XA^PW{_SW}^LL{_SH}^CI28{block_l}^FO{_f(199)},0^GB1,{_SH},1,B,0^FS^PQ{copies},0,1,Y^XZ"
+    zpl = f"^XA^BY2,2,1^PW{_SW}^LL{_SH}^CI28{block_l}^FO{_f(199)},0^GB1,{_SH},1,B,0^FS^PQ{copies},0,1,Y^XZ"
     _send_zpl(zpl)
 
 def print_issue_batch_qr(items: list) -> None:
@@ -224,7 +244,7 @@ def print_issue_batch_qr(items: list) -> None:
         block_r = ""
         if i + 1 < len(items):
             block_r = _get_issue_block_zpl(_f(200), **items[i+1])
-        zpl = f"^XA^PW{_SW}^LL{_SH}^CI28{block_l}{block_r}^FO{_f(199)},0^GB1,{_SH},1,B,0^FS^PQ1,0,1,Y^XZ"
+        zpl = f"^XA^BY2,2,1^PW{_SW}^LL{_SH}^CI28{block_l}{block_r}^FO{_f(199)},0^GB1,{_SH},1,B,0^FS^PQ1,0,1,Y^XZ"
         _send_zpl(zpl)
 
 def print_po_label(po_code: str, vendor_name: str) -> None:

@@ -260,7 +260,7 @@ class ManualReceivePage(BasePage):
                 reply = self.confirm("列印詢問", "入庫數量為單數，最後一瓶要等待下一筆併案列印嗎？\n(點擊「是」則暫存，點擊「否」則立即印出單張)")
                 if reply:
                     self._pending_qr = remaining
-                    self.alert("等待中", "最後一瓶標籤已暫存，請繼續下一筆入庫...")
+                    # self.alert("等待中", "最後一瓶標籤已暫存，請繼續下一筆入庫...") # 移除等待彈窗
                 else:
                     try:
                         print_receive_batch_qr([remaining])
@@ -275,7 +275,7 @@ class ManualReceivePage(BasePage):
             for c_idx, val in enumerate([rid, name, lot_number, expiry_str, today_str, mode_label]):
                 self.table.setItem(r, c_idx, QTableWidgetItem(val))
 
-        self.alert("入庫完成", f"已入庫 {qty} 瓶，RID：{new_rows[0]}～{new_rows[-1]}")
+        # self.alert("入庫完成", f"已入庫 {qty} 瓶，RID：{new_rows[0]}～{new_rows[-1]}") # 移除完成彈窗
 
         # 清除表單
         self.f_lot.clear()

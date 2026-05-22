@@ -45,7 +45,7 @@ DEFAULT_FONT = "PingFang TC" if IS_MAC else "Microsoft JhengHei"
 # Windows: 填入「裝置和印表機」中顯示的名稱，例如 "ZDesigner GX420t"
 # macOS  : 填入 CUPS 中的印表機名稱，例如 "Zebra_ZT410"
 # 留空   : 使用系統預設印表機
-ZEBRA_PRINTER_NAME = ""
+ZEBRA_PRINTER_NAME = "Zebra_Technologies_ZTC_ZD421_203dpi_ZPL"
 
 # 印表機 DPI（請依實際型號與購買規格填入 203 或 300）
 ZEBRA_DPI = 203

@@ -202,51 +202,45 @@ class PurchaseOrderPage(BasePage):
 
         PurchaseOrderModel.set_status(po_id, 1)
 
-        # 列印訂購單（ZPL A4 / 一般訂購條碼標籤）
-        self._print_po(po_code, vendor_name, dept_name, order_items)
+        # 列印訂購單（呼叫 A4 PDF 報表引擎）
+        self._print_po(po_code)
 
         self.alert("訂單已建立",
                    f"訂購單條碼：{po_code}\n共 {len(order_items)} 項試劑")
         self.table.setRowCount(0)
         self._reagents = []
 
-    def _print_po(self, po_code, vendor_name, dept_name, items):
-        """列印訂購單（含訂購條碼），使用 ZPL 列印至 Zebra 印表機。"""
-        # 訂購單標籤：10cm x 15cm @ 203dpi = 800 x 1200 dots
-        lines = "\n".join(
-            f"^FO20,{220 + i*28}^CF0,20^FD{oi['name']}  x{oi['qty']}^FS"
-            for i, oi in enumerate(items[:20])
+    def _print_po(self, po_code):
+        """產生 A4 訂購單 PDF 並詢問儲存路徑，存檔後自動開啟。"""
+        import os
+        from PyQt6.QtWidgets import QFileDialog
+        from PyQt6.QtGui import QDesktopServices
+        from PyQt6.QtCore import QUrl
+        from services.report_generator import ReportGenerator
+
+        po_data = PurchaseOrderModel.get_by_code(po_code)
+        if not po_data:
+            self.warn("錯誤", "找不到訂購單資料")
+            return
+
+        po_data["creator_name"] = self.user.get("name", "未知")
+
+        # 預設儲存路徑
+        default_name = f"訂購單_{po_code}.pdf"
+        default_dir = os.path.expanduser("~/Documents")
+        path, _ = QFileDialog.getSaveFileName(
+            self,
+            "儲存訂購單 PDF",
+            os.path.join(default_dir, default_name),
+            "PDF Files (*.pdf)"
         )
-        zpl = f"""^XA
-^PW800
-^LL1200
-^CI28
+        if not path:
+            return  # 使用者取消儲存
 
-^FO20,20
-^CF0,40
-^FD訂購單^FS
-
-^FO20,70
-^CF0,24
-^FD廠商：{vendor_name}^FS
-^FO20,100
-^CF0,24
-^FD組別：{dept_name}^FS
-
-^FO20,140
-^BCN,80,N,N,N
-^FD{po_code}^FS
-^FO260,148
-^CF0,20
-^FD{po_code}^FS
-
-^FO20,200
-^CF0,20
-^FD訂購項目：^FS
-{lines}
-
-^XZ"""
         try:
-            _send_zpl(zpl)
+            ReportGenerator.generate_po_pdf(po_data, path)
+            QDesktopServices.openUrl(QUrl.fromLocalFile(path))
         except Exception as e:
-            self.warn( "列印錯誤", str(e))
+            import traceback
+            traceback.print_exc()
+            self.warn("產生 PDF 失敗", str(e))

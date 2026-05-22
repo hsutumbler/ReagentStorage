@@ -296,15 +296,20 @@ class TraceabilityPage(BasePage):
             sel = dlg.get_selection()
             try:
                 if sel["type"] == "receive":
+                    from database.models.inventory import InventoryModel
+                    is_new = InventoryModel.is_first_bottle_of_lot(item["rid"])
+                    
                     if sel["format"] == "text":
                         print_receive_label_large(
                             item["rid"], item["reagent_name"], item["lot_number"],
-                            str(item["expiry_date"]), str(item["received_date"])
+                            str(item["expiry_date"]), str(item["received_date"]),
+                            is_new_lot=is_new
                         )
                     else:
                         print_receive_label_qr(
                             item["rid"], item["reagent_name"], item["lot_number"],
-                            str(item["expiry_date"]), str(item["received_date"])
+                            str(item["expiry_date"]), str(item["received_date"]),
+                            is_new_lot=is_new
                         )
                 else:
                     # 出庫標籤
@@ -320,6 +325,6 @@ class TraceabilityPage(BasePage):
                             str(item["open_expiry_date"]), str(item.get("issued_at", "")),
                             item.get("issued_by_name", "N/A")
                         )
-                self.alert("列印指令已送出", f"正在補印 RID: {item['rid']} 的{ '出庫' if sel['type']=='issue' else '入庫'}標籤。")
+                # self.alert("列印指令已送出", f"正在補印 RID: {item['rid']} 的{ '出庫' if sel['type']=='issue' else '入庫'}標籤。") # 依使用者要求移除成功提示
             except Exception as e:
                 self.warn("列印失敗", f"傳送列印指令時發生錯誤：\n{str(e)}")

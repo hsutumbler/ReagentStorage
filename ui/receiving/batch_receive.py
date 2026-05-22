@@ -410,7 +410,7 @@ class BatchReceivePage(BasePage):
 
             PurchaseOrderModel.set_status(self._po["po_id"], final_status)
             status_text = "部分入庫完成" if final_status == 1 else "整批入庫完成 (已結案)"
-            self.alert(status_text, f"共入庫 {total_bottles} 瓶")
+            # self.alert(status_text, f"共入庫 {total_bottles} 瓶") # 移除成功時的阻擋式彈窗
             
             self.table.setRowCount(0)
             self._po = None

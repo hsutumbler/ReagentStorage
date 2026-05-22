@@ -49,6 +49,22 @@ class InventoryModel:
             return c.fetchone()
 
     @staticmethod
+    def is_first_bottle_of_lot(rid: str) -> bool:
+        """判斷該瓶試劑是否為同批號中最早入庫的第一瓶（用於還原 NEW 標記）"""
+        with DBContext() as (_, c):
+            c.execute("SELECT reagent_id, lot_number, inventory_id FROM inventory WHERE rid = %s", (rid,))
+            row = c.fetchone()
+            if not row:
+                return False
+            
+            c.execute(
+                "SELECT MIN(inventory_id) as min_id FROM inventory WHERE reagent_id = %s AND lot_number = %s",
+                (row["reagent_id"], row["lot_number"])
+            )
+            res = c.fetchone()
+            return res and res["min_id"] == row["inventory_id"]
+
+    @staticmethod
     def issue(inventory_id: int, issued_by: int, issue_mode: int,
               open_expiry_date: date, printed_expiry_date: date) -> None:
         with DBContext() as (_, c):

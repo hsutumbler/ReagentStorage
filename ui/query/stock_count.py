@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout, QLabel, QComboBox, QPushButton, QTableWidgetItem, QFileDialog
 )
 from PyQt6.QtGui import QColor, QTextDocument, QPageLayout, QPageSize
-from PyQt6.QtCore import QMarginsF
+from PyQt6.QtCore import QMarginsF, QSizeF
 from PyQt6.QtPrintSupport import QPrinter
 from ui.base_page import BasePage
 from database.models.vendor import VendorModel
@@ -117,11 +117,11 @@ class StockCountPage(BasePage):
         <head>
             <style>
                 body {{ font-family: sans-serif; font-size: 12pt; margin: 0; padding: 0; }}
-                h1 {{ text-align: center; font-size: 18pt; margin-top: 20px; margin-bottom: 30px; letter-spacing: 5px; font-weight: bold; }}
+                h1 {{ text-align: center; font-size: 18pt; margin-top: 0px; margin-bottom: 30px; letter-spacing: 5px; font-weight: bold; }}
                 .info {{ font-size: 12pt; margin-bottom: 15px; }}
                 table {{ width: 100%; border-collapse: collapse; margin-top: 10px; border: 1px solid #000; }}
-                th, td {{ padding: 10px 5px; text-align: center; font-size: 11pt; border: 1px solid #000; }}
-                th {{ background-color: #f2f2f2; font-weight: bold; }}
+                td {{ padding: 10px 5px; text-align: center; font-size: 11pt; border: 1px solid #000; }}
+                .header-cell {{ background-color: #f2f2f2; font-weight: bold; border: 1px solid #000; }}
                 .note-line {{ display: inline-block; width: 85%; border-bottom: 1px solid #000; margin-left: 10px; }}
                 .footer {{ margin-top: 40px; font-size: 12pt; text-align: left; }}
             </style>
@@ -133,13 +133,13 @@ class StockCountPage(BasePage):
             </div>
             <table width="100%" border="1" cellspacing="0" cellpadding="8" bordercolor="#000000">
                 <tr>
-                    <th style="width: 25%;">試劑名稱</th>
-                    <th style="width: 15%;">料號</th>
-                    <th style="width: 15%;">組別</th>
-                    <th style="width: 15%;">廠商</th>
-                    <th style="width: 12%;">安全庫存</th>
-                    <th style="width: 12%;">目前庫存</th>
-                    <th style="width: 6%;">單位</th>
+                    <td class="header-cell" style="width: 25%;">試劑名稱</td>
+                    <td class="header-cell" style="width: 15%;">料號</td>
+                    <td class="header-cell" style="width: 15%;">組別</td>
+                    <td class="header-cell" style="width: 15%;">廠商</td>
+                    <td class="header-cell" style="width: 12%;">安全庫存</td>
+                    <td class="header-cell" style="width: 12%;">目前庫存</td>
+                    <td class="header-cell" style="width: 6%;">單位</td>
                 </tr>
         """
         for row in self._data:
@@ -162,8 +162,11 @@ class StockCountPage(BasePage):
         printer.setOutputFormat(QPrinter.OutputFormat.PdfFormat)
         printer.setOutputFileName(path)
         printer.setPageSize(QPageSize(QPageSize.PageSizeId.A4))
-        # 設定邊界：左右 5mm，上方 0mm，下方 10mm
-        printer.setPageMargins(QMarginsF(5, 0, 5, 10), QPageLayout.Unit.Millimeter)
+        # 設定邊界：左右 10mm，上方 20mm (2公分)，下方 10mm
+        printer.setPageMargins(QMarginsF(10, 20, 10, 10), QPageLayout.Unit.Millimeter)
+        
+        # 關鍵修正：強制 QTextDocument 的寬度與印表機的可列印區域一致，避免預設寬度過窄導致向中縮排
+        doc.setPageSize(QSizeF(printer.pageRect(QPrinter.Unit.Point).size()))
 
         doc.print(printer)
         self.alert("列印成功", f"盤點報表已儲存至：\n{path}")
