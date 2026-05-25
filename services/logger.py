@@ -132,11 +132,18 @@ def setup_global_logger():
             sys.__excepthook__(exc_type, exc_value, exc_traceback)
             return
 
-        # 記錄完整的 Traceback 堆疊資訊
-        logger.critical(
-            "未攔截的全域例外異常 (Uncaught Exception):",
-            exc_info=(exc_type, exc_value, exc_traceback)
-        )
+        try:
+            # 記錄完整的 Traceback 堆疊資訊
+            logger.critical(
+                "未攔截的全域例外異常 (Uncaught Exception):",
+                exc_info=(exc_type, exc_value, exc_traceback)
+            )
+        except Exception:
+            # 若 logger 寫入失敗（例如 Windows 控制台編碼錯誤），退回到系統預設的輸出，確保能印出 Traceback
+            try:
+                sys.__excepthook__(exc_type, exc_value, exc_traceback)
+            except Exception:
+                pass
 
     sys.excepthook = handle_exception
 

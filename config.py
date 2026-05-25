@@ -2,10 +2,10 @@
 # 請依實際環境修改以下設定
 
 DB_CONFIG = {
-    "host": "127.0.0.1",      # MySQL 伺服器 IP
+    "host": "192.168.0.188",      # MySQL 伺服器 IP
     "port": 3306,
     "user": "reagent_user",
-    "password": "reagent_pass",
+    "password": "12345678",
     "database": "reagent_storage",
     "charset": "utf8mb4",
     "connection_timeout": 10,

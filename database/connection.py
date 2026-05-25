@@ -14,6 +14,7 @@ class DatabasePool:
         if cls._pool is None:
             try:
                 cls._pool = pooling.MySQLConnectionPool(
+                    use_pure=True,
                     **POOL_CONFIG,
                     **DB_CONFIG,
                 )
@@ -70,5 +71,11 @@ def test_connection() -> bool:
             cursor.fetchone()   # 必須讀取，否則 commit 時報 Unread result
         return True
     except Exception as e:
-        print(f"\n[❌ 連線失敗詳細錯誤] {e}\n")
+        import sys
+        try:
+            encoding = sys.stdout.encoding or "utf-8"
+            err_msg = str(e).encode(encoding, errors="replace").decode(encoding)
+        except Exception:
+            err_msg = str(e)
+        print(f"\n[ERROR 連線失敗詳細錯誤] {err_msg}\n", flush=True)
         return False

@@ -57,19 +57,11 @@ def main():
     logger = setup_global_logger()
     logger.info("====== ReagentStorage Application Started ======")
 
-    app = QApplication(sys.argv)
-    app.setApplicationName(APP_NAME)
-    app.setStyle("Fusion")
+    # 測試資料庫連線 (在初始化 QApplication 之前先做，避免 mysql C 擴充與 Qt C++ 程式庫衝突崩潰)
+    conn_ok = test_connection()
     
-    # 全域字型
-    font = QFont(DEFAULT_FONT, 10)
-    app.setFont(font)
-
-    # 套用亮色 # 調色盤
-    _apply_light_palette(app)
-
-    # 測試資料庫連線
-    if not test_connection():
+    if not conn_ok:
+        app = QApplication(sys.argv)
         err = QMessageBox()
         err.setWindowTitle("資料庫連線失敗")
         err.setText(
@@ -81,6 +73,17 @@ def main():
         err.setIcon(QMessageBox.Icon.Critical)
         err.exec()
         sys.exit(1)
+
+    app = QApplication(sys.argv)
+    app.setApplicationName(APP_NAME)
+    app.setStyle("Fusion")
+    
+    # 全域字型
+    font = QFont(DEFAULT_FONT, 10)
+    app.setFont(font)
+
+    # 套用亮色 # 調色盤
+    _apply_light_palette(app)
 
     from ui.login_window import LoginWindow
     from ui.main_window import MainWindow
