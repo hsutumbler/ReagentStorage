@@ -25,6 +25,7 @@ class ManualReceivePage(BasePage):
     def __init__(self, user: dict):
         super().__init__("手工入庫", "逐筆輸入試劑資料進行入庫", user)
         self._pending_qr = None
+        self._reagent_label_types = {}
         self._build()
 
     def _build(self):
@@ -53,6 +54,7 @@ class ManualReceivePage(BasePage):
         self.cb_reagent = QComboBox()
         self.cb_reagent.setMinimumWidth(240)
         self._load_reagents()
+        self.cb_reagent.currentIndexChanged.connect(self._on_reagent_changed)
         grid.addWidget(self.cb_reagent, 0, 3)
 
         grid.addWidget(QLabel("批號 *"), 0, 4)
@@ -159,9 +161,11 @@ class ManualReceivePage(BasePage):
 
     def _load_reagents(self):
         vendor_id = self.cb_vendor.currentData()
+        self.cb_reagent.blockSignals(True)
         self.cb_reagent.clear()
         self.cb_reagent.addItem("— 請選擇試劑 —", None)
         
+        self._reagent_label_types = {}
         reagents = ReagentModel.get_all()
         if vendor_id:
             reagents = [r for r in reagents if r["vendor_id"] == vendor_id]
@@ -169,6 +173,18 @@ class ManualReceivePage(BasePage):
         for r in reagents:
             label = r['reagent_name']
             self.cb_reagent.addItem(label, r["reagent_id"])
+            self._reagent_label_types[r["reagent_id"]] = r.get("default_label_type", 1)
+        self.cb_reagent.blockSignals(False)
+
+    def _on_reagent_changed(self):
+        reagent_id = self.cb_reagent.currentData()
+        if not reagent_id:
+            return
+        lbl_type = self._reagent_label_types.get(reagent_id, 1)
+        if lbl_type == 2:
+            self.chk_print_qr.setChecked(True)
+        else:
+            self.chk_print_large.setChecked(True)
 
     def _do_receive(self):
         reagent_id = self.cb_reagent.currentData()

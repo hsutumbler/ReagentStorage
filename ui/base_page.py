@@ -468,7 +468,8 @@ class BasePage(QWidget):
         return row
 
     def confirm(self, title: str, message: str, default_yes=False) -> bool:
-        dlg = QMessageBox(None)
+        parent_win = self.window() if self.window() else self
+        dlg = QMessageBox(parent_win)
         dlg.setWindowTitle(title)
         dlg.setText(message)
         dlg.setIcon(QMessageBox.Icon.Question)
@@ -489,7 +490,8 @@ class BasePage(QWidget):
         return dlg.exec() == QMessageBox.StandardButton.Yes
 
     def alert(self, title: str, message: str):
-        dlg = QMessageBox(None)
+        parent_win = self.window() if self.window() else self
+        dlg = QMessageBox(parent_win)
         dlg.setWindowTitle(title)
         dlg.setText(message)
         dlg.setIcon(QMessageBox.Icon.Information)
@@ -497,7 +499,8 @@ class BasePage(QWidget):
         dlg.exec()
 
     def warn(self, title: str, message: str):
-        dlg = QMessageBox(None)
+        parent_win = self.window() if self.window() else self
+        dlg = QMessageBox(parent_win)
         dlg.setWindowTitle(title)
         dlg.setText(message)
         dlg.setIcon(QMessageBox.Icon.Warning)

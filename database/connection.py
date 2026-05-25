@@ -69,5 +69,6 @@ def test_connection() -> bool:
             cursor.execute("SELECT 1 AS ok")
             cursor.fetchone()   # 必須讀取，否則 commit 時報 Unread result
         return True
-    except Exception:
+    except Exception as e:
+        print(f"\n[❌ 連線失敗詳細錯誤] {e}\n")
         return False

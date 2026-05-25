@@ -38,7 +38,7 @@ class InventoryModel:
     def get_by_rid(rid: str) -> dict | None:
         sql = """
             SELECT i.*, r.reagent_name, r.open_days, r.storage_temp,
-                   v.vendor_name
+                   r.default_label_type, v.vendor_name
             FROM inventory i
             JOIN reagents r ON i.reagent_id = r.reagent_id
             JOIN vendors v ON r.vendor_id = v.vendor_id

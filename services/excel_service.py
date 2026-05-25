@@ -36,7 +36,10 @@ class ExcelService:
                     brand = str(row.get("廠牌", "")) if pd.notna(row.get("廠牌")) else ""
                     temp = str(row.get("保存溫度", "")) if pd.notna(row.get("保存溫度")) else ""
                     open_days = int(row.get("開封天數", 0)) if pd.notna(row.get("開封天數")) else 0
+                    safety_stock = float(row.get("安全庫存", 0)) if pd.notna(row.get("安全庫存")) else 0.0
                     unit_name = str(row.get("換算名稱", "")).strip() if pd.notna(row.get("換算名稱")) else None
+                    lbl_type_str = str(row.get("預設標籤類型", "一般標籤")).strip()
+                    default_label_type = 2 if "QR" in lbl_type_str or "qr" in lbl_type_str else 1
                     
                     # 1. 處理組別
                     dept_id = ExcelService._get_or_create_dept(dept_name)
@@ -59,7 +62,9 @@ class ExcelService:
                         open_days=open_days,
                         vendor_id=vendor_id,
                         brand=brand,
-                        unit_id=unit_id
+                        unit_id=unit_id,
+                        safety_stock=safety_stock,
+                        default_label_type=default_label_type
                     )
                     success += 1
                 except Exception as e:
@@ -125,9 +130,10 @@ class ExcelService:
         try:
             import pandas as pd
             df = pd.DataFrame(columns=[
-                "試劑名稱", "料號", "組別", "廠商", "廠牌", "保存溫度", "開封天數", "換算名稱"
+                "試劑名稱", "料號", "組別", "廠商", "廠牌", "保存溫度", "開封天數", "安全庫存", "換算名稱", "預設標籤類型"
             ])
-            df.loc[0] = ["範例試劑-AFP", "REF-001", "生化組", "醫全", "Abbott", "2-8°C", 30, "AFP-100T"]
+            df.loc[0] = ["範例試劑-AFP", "REF-001", "生化組", "醫全", "Abbott", "2-8°C", 30, 10.0, "AFP-100T", "一般標籤"]
+            df.loc[1] = ["範例試劑-HIV", "REF-002", "血清組", "醫全", "Roche", "2-8°C", 45, 5.0, "HIV-100T", "QR Code 標籤"]
             df.to_excel(output_path, index=False)
             return True
         except Exception:

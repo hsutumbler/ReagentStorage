@@ -1,0 +1,12 @@
+2026-05-25 22:23:48,809 [INFO] (<string>:1) - Test log
+2026-05-25 22:26:07,786 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-25 22:27:03,570 [CRITICAL] (logger.py:136) - 未攔截的全域例外異常 (Uncaught Exception):
+Traceback (most recent call last):
+  File "/Users/hsutumbler/Project/ReagentStorage/ui/master/reagent_management.py", line 122, in _import_excel
+    self.alert("完成", "範本已儲存，請填寫後再行匯入。")
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/hsutumbler/Project/ReagentStorage/ui/base_page.py", line 492, in alert
+    dlg = QMessageBox(self)
+RuntimeError: wrapped C/C++ object of type ReagentManagementPage has been deleted
+2026-05-25 22:31:45,167 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-25 22:41:14,443 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======

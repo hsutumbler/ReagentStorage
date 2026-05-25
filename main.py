@@ -6,6 +6,7 @@ from PyQt6.QtGui import QFont, QPalette, QColor
 from PyQt6.QtCore import Qt
 from config import APP_NAME, DEFAULT_FONT
 from database.connection import test_connection, DatabasePool
+from services.logger import setup_global_logger
 
 
 def _apply_light_palette(app: QApplication):
@@ -53,6 +54,9 @@ def _apply_light_palette(app: QApplication):
 
 
 def main():
+    logger = setup_global_logger()
+    logger.info("====== ReagentStorage Application Started ======")
+
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
     app.setStyle("Fusion")

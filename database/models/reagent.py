@@ -76,32 +76,32 @@ class ReagentModel:
 
     @staticmethod
     def create(reagent_name, item_number, dept_id, storage_temp,
-               open_days, vendor_id, brand, unit_id=None, safety_stock=0) -> int:
+               open_days, vendor_id, brand, unit_id=None, safety_stock=0, default_label_type=1) -> int:
         with DBContext() as (_, c):
             c.execute(
                 "INSERT INTO reagents "
                 "(reagent_name, item_number, dept_id, storage_temp, "
-                " open_days, vendor_id, brand, unit_id, safety_stock) "
-                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                " open_days, vendor_id, brand, unit_id, safety_stock, default_label_type) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (reagent_name, item_number, dept_id, storage_temp,
-                 open_days, vendor_id, brand, unit_id, safety_stock),
+                 open_days, vendor_id, brand, unit_id, safety_stock, default_label_type),
             )
             return c.lastrowid
 
     @staticmethod
     def update(reagent_id, reagent_name, item_number, dept_id, storage_temp,
-               open_days, vendor_id, brand, unit_id=None, safety_stock=0) -> None:
+               open_days, vendor_id, brand, unit_id=None, safety_stock=0, default_label_type=1) -> None:
         with DBContext() as (_, c):
             sql = """
                 UPDATE reagents SET 
                     reagent_name=%s, item_number=%s, dept_id=%s, 
                     storage_temp=%s, open_days=%s, vendor_id=%s, 
-                    brand=%s, unit_id=%s, safety_stock=%s
+                    brand=%s, unit_id=%s, safety_stock=%s, default_label_type=%s
                 WHERE reagent_id=%s
             """
             c.execute(sql, (
                 reagent_name, item_number, dept_id, storage_temp,
-                open_days, vendor_id, brand, unit_id, safety_stock, reagent_id
+                open_days, vendor_id, brand, unit_id, safety_stock, default_label_type, reagent_id
             ))
 
     @staticmethod

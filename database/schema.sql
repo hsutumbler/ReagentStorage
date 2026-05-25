@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS reagents (
     vendor_id     INT           NOT NULL,
     brand         VARCHAR(50)   COMMENT '廠牌',
     unit_id       INT           COMMENT '單位換算',
+    default_label_type INT      NOT NULL DEFAULT 0 COMMENT '預設標籤類型：0=系統預設, 1=一般標籤, 2=QR Code標籤',
     is_active     BOOLEAN       NOT NULL DEFAULT TRUE,
     created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP

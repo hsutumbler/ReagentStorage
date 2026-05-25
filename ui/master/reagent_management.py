@@ -107,7 +107,8 @@ class ReagentManagementPage(BasePage):
     def _import_excel(self):
         """匯入試劑主檔 Excel。"""
         # 詢問是要下載範本還是匯入
-        msg = QMessageBox(None)
+        parent_win = self.window() if self.window() else self
+        msg = QMessageBox(parent_win)
         msg.setWindowTitle("Excel 匯入")
         msg.setText("請選擇操作：")
         btn_download = msg.addButton("下載範本", QMessageBox.ButtonRole.ActionRole)
@@ -116,7 +117,7 @@ class ReagentManagementPage(BasePage):
         msg.exec()
 
         if msg.clickedButton() == btn_download:
-            path, _ = QFileDialog.getSaveFileName(None, "儲存範本", "試劑匯入範本.xlsx", "Excel Files (*.xlsx)")
+            path, _ = QFileDialog.getSaveFileName(parent_win, "儲存範本", "試劑匯入範本.xlsx", "Excel Files (*.xlsx)")
             if path:
                 if ExcelService.generate_reagent_template(path):
                     self.alert("完成", "範本已儲存，請填寫後再行匯入。")
@@ -124,7 +125,7 @@ class ReagentManagementPage(BasePage):
                     self.warn("失敗", "無法儲存範本，請檢查檔案是否已被開啟或資料夾權限。")
         
         elif msg.clickedButton() == btn_import:
-            path, _ = QFileDialog.getOpenFileName(None, "選取 Excel 檔案", "", "Excel Files (*.xlsx *.xls)")
+            path, _ = QFileDialog.getOpenFileName(parent_win, "選取 Excel 檔案", "", "Excel Files (*.xlsx *.xls)")
             if path:
                 s, f, err = ExcelService.import_reagents(path)
                 result_msg = f"匯入完成！\n成功：{s} 筆\n失敗：{f} 筆"
@@ -132,7 +133,7 @@ class ReagentManagementPage(BasePage):
                     result_msg += f"\n\n錯誤詳情：\n{err}"
                 
                 if f > 0:
-                    QMessageBox.warning(None, "匯入結果", result_msg)
+                    QMessageBox.warning(parent_win, "匯入結果", result_msg)
                 else:
                     self.alert("匯入成功", result_msg)
                 self._load_data()
@@ -284,6 +285,14 @@ class ReagentDialog(QDialog):
         safety_row.addWidget(self.f_safety)
         safety_row.addWidget(self.lbl_safety_unit)
 
+        # 預設標籤類型設定
+        self.cb_label_type = QComboBox()
+        self.cb_label_type.addItem("一般標籤", 1)
+        self.cb_label_type.addItem("QR Code 標籤", 2)
+        if reagent:
+            idx = self.cb_label_type.findData(reagent.get("default_label_type", 1))
+            if idx >= 0: self.cb_label_type.setCurrentIndex(idx)
+
         # 切換換算設定時動態更新安全庫存的單位標籤
         self.cb_unit.currentIndexChanged.connect(self._update_safety_unit_label)
         self._update_safety_unit_label()
@@ -297,6 +306,7 @@ class ReagentDialog(QDialog):
         form.addRow("開封天數（天）", self.f_open_days)
         form.addRow("單位換算設定", self.cb_unit)
         form.addRow("安全庫存（入庫單位）", safety_row)
+        form.addRow("預設列印標籤", self.cb_label_type)
 
         btn_row = QHBoxLayout()
         btn_ok = QPushButton("儲存")
@@ -342,4 +352,5 @@ class ReagentDialog(QDialog):
             "brand":        self.f_brand.text().strip() or None,
             "unit_id":      self.cb_unit.currentData(),
             "safety_stock": self.f_safety.value(),
+            "default_label_type": self.cb_label_type.currentData(),
         }

@@ -156,6 +156,13 @@ class IssuePage(BasePage):
 
         self._current_item = item
 
+        # 自動勾選預設標籤類型
+        lbl_type = item.get("default_label_type", 1)
+        if lbl_type == 2:
+            self.chk_qr.setChecked(True)
+        else:
+            self.chk_large.setChecked(True)
+
         # 計算開封效期
         today = date.today()
         open_days = item["open_days"] or 0
