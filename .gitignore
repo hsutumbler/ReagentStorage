@@ -26,3 +26,8 @@ env/
 # Project specific temporary files
 scratch/
 test.xlsx
+
+# SQLite offline database
+reagent_offline.db
+reagent_offline.db-journal
+

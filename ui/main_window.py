@@ -171,7 +171,14 @@ class MainWindow(QMainWindow):
 
         icon = QLabel("🧪")
         icon.setObjectName("sidebar_logo_icon")
-        name = QLabel("試劑庫存系統")
+        
+        from database.connection import IS_CONNECTED
+        if not IS_CONNECTED:
+            name = QLabel("試劑庫存 (未連線)")
+            self.setWindowTitle(APP_NAME + " (未連線測試模式)")
+        else:
+            name = QLabel("試劑庫存系統")
+            
         name.setObjectName("sidebar_logo_text")
 
         layout.addWidget(icon)
@@ -179,6 +186,7 @@ class MainWindow(QMainWindow):
         layout.addWidget(name)
         layout.addStretch()
         return w
+
 
     def _build_user_info(self) -> QWidget:
         w = QWidget()
@@ -336,7 +344,7 @@ class MainWindow(QMainWindow):
                 font-weight: 600;
             }
             #user_role_label {
-                color: #636E72;
+                color: #4F5D65; /* 更加清晰的深色 */
                 font-size: 11px;
             }
 
@@ -350,40 +358,41 @@ class MainWindow(QMainWindow):
                 background: #F1F4F9;
             }
             #nav_group_label {
-                color: #B2BEC3;
-                font-size: 10px;
-                font-weight: 700;
+                color: #4F5E6B; /* 從極淡灰色改為清晰的高對比深藍灰 */
+                font-size: 10.5px;
+                font-weight: 700; /* 減輕粗細 800 -> 700 */
                 letter-spacing: 2px;
                 padding: 12px 4px 6px 4px;
             }
             #nav_btn {
                 background: transparent;
-                color: #636E72;
+                color: #2D3436; /* 從淺灰色改為清晰可見的深炭灰色 */
                 border: none;
                 border-radius: 8px;
                 text-align: left;
                 padding: 0 10px;
-                font-size: 13px;
-                font-weight: 500;
+                font-size: 13.5px; /* 微調放大 */
+                font-weight: 500; /* 減輕粗細 600 -> 500 */
             }
             #nav_btn:hover {
                 background: #E2E8F0;
-                color: #2D3436;
+                color: #111111;
             }
             #nav_btn:checked {
                 background: #E6F0FF;
                 color: #0066CC;
-                font-weight: 600;
+                font-weight: 700; /* 減輕粗細 800 -> 700 */
             }
 
             /* ── 登出按鈕 ── */
             #logout_btn {
                 background: transparent;
-                color: #636E72;
+                color: #2D3436; /* 深炭灰色 */
                 border: none;
                 text-align: left;
                 padding: 0 20px;
-                font-size: 13px;
+                font-size: 13.5px;
+                font-weight: 500; /* 減輕粗細 600 -> 500 */
             }
             #logout_btn:hover {
                 background: #FFF5F5;

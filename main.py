@@ -1,9 +1,38 @@
 # main.py — 程式進入點
 
 import sys
-from PyQt6.QtWidgets import QApplication, QMessageBox
-from PyQt6.QtGui import QFont, QPalette, QColor
-from PyQt6.QtCore import Qt
+import os
+import platform
+import subprocess
+
+try:
+    from PyQt6.QtWidgets import QApplication, QMessageBox
+    from PyQt6.QtGui import QFont, QPalette, QColor
+    from PyQt6.QtCore import Qt
+except ModuleNotFoundError:
+    # 偵測是否因為在 32位元 Python 下執行，導致找不到 64位元環境的 PyQt6
+    if platform.architecture()[0] == '32bit':
+        try:
+            # 測試本地 64位元 Python 3.11 環境中是否裝有 PyQt6
+            check = subprocess.run(["py", "-3.11", "-c", "import PyQt6"], capture_output=True)
+            if check.returncode == 0:
+                # 成功！以 64位元 Python 3.11 自動重新啟動本程式，對使用者完全透明
+                args = ["py", "-3.11"] + sys.argv
+                os.execvp("py", args)
+                sys.exit(0)
+        except Exception:
+            pass
+
+    # 若無法自動重新啟動，則印出友善的命令列提示
+    print("\n" + "="*80)
+    print("【啟動失敗】找不到 PyQt6 模組！")
+    print(f"目前執行的 Python 環境是: {platform.architecture()[0]} (路徑: {sys.executable})")
+    print("提示：此程式的套件已成功安裝在您電腦的【64位元 Python 3.11】環境中。")
+    print("請使用以下指令啟動程式：")
+    print("    py -3.11 main.py")
+    print("="*80 + "\n")
+    sys.exit(1)
+
 from config import APP_NAME, DEFAULT_FONT
 from database.connection import test_connection, DatabasePool
 from services.logger import setup_global_logger
@@ -57,33 +86,19 @@ def main():
     logger = setup_global_logger()
     logger.info("====== ReagentStorage Application Started ======")
 
-    # 測試資料庫連線 (在初始化 QApplication 之前先做，避免 mysql C 擴充與 Qt C++ 程式庫衝突崩潰)
-    conn_ok = test_connection()
-    
-    if not conn_ok:
-        app = QApplication(sys.argv)
-        err = QMessageBox()
-        err.setWindowTitle("資料庫連線失敗")
-        err.setText(
-            "無法連線至 MySQL 資料庫伺服器，請確認：\n\n"
-            "1. MySQL 伺服器是否已啟動\n"
-            "2. config.py 中的 host / user / password 是否正確\n"
-            "3. 區域網路連線是否正常"
-        )
-        err.setIcon(QMessageBox.Icon.Critical)
-        err.exec()
-        sys.exit(1)
-
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
     app.setStyle("Fusion")
     
-    # 全域字型
-    font = QFont(DEFAULT_FONT, 10)
+    # 全域字型 (提高至 11pt 以增強微軟正黑體的可讀性與清晰度)
+    font = QFont(DEFAULT_FONT, 11)
     app.setFont(font)
 
     # 套用亮色 # 調色盤
     _apply_light_palette(app)
+
+    # 測試資料庫連線 (連線狀態會自動寫入 database.connection.IS_CONNECTED)
+    test_connection()
 
     from ui.login_window import LoginWindow
     from ui.main_window import MainWindow
@@ -100,6 +115,7 @@ def main():
     code = app.exec()
     DatabasePool.close_pool()
     sys.exit(code)
+
 
 
 if __name__ == "__main__":

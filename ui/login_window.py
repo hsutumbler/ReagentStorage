@@ -2,7 +2,7 @@
 
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QFrame,
+    QLineEdit, QPushButton, QFrame, QMessageBox, QApplication
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QPropertyAnimation, QEasingCurve, QRect
 from PyQt6.QtGui import QFont, QLinearGradient, QColor, QPainter, QPainterPath
@@ -43,7 +43,7 @@ class LoginWindow(QDialog):
         title.setObjectName("brand_title")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        subtitle = QLabel("醫院檢驗科 · 試劑庫存管理")
+        subtitle = QLabel("義大大昌醫院檢驗科")
         subtitle.setObjectName("brand_subtitle")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -52,7 +52,29 @@ class LoginWindow(QDialog):
         layout.addWidget(title)
         layout.addSpacing(4)
         layout.addWidget(subtitle)
-        layout.addSpacing(36)
+
+        # ── 資料庫連線狀態區 ──
+        layout.addSpacing(12)
+        self.conn_status_layout = QHBoxLayout()
+        self.conn_status_layout.addStretch()
+        
+        self.lbl_conn_status = QLabel()
+        self.lbl_conn_status.setObjectName("conn_status_label")
+        self.lbl_conn_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.conn_status_layout.addWidget(self.lbl_conn_status)
+        
+        self.btn_reconnect = QPushButton("連線伺服器")
+        self.btn_reconnect.setObjectName("btn_reconnect")
+        self.btn_reconnect.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_reconnect.setFixedHeight(24)
+        self.btn_reconnect.clicked.connect(self._do_reconnect)
+        self.conn_status_layout.addWidget(self.btn_reconnect)
+        
+        self.conn_status_layout.addStretch()
+        layout.addLayout(self.conn_status_layout)
+        layout.addSpacing(18)
+        
+        self._update_conn_status_ui()
 
         # ── 工號輸入 ──
         lbl_id = QLabel("工號")
@@ -126,10 +148,29 @@ class LoginWindow(QDialog):
             }}
 
             #brand_subtitle {{
-                color: #636E72;
-                font-size: 12px;
+                color: #2D3436;
+                font-size: 13px;
+                font-weight: 500;
                 font-family: {DEFAULT_FONT};
                 letter-spacing: 1px;
+            }}
+
+            #conn_status_label {{
+                font-family: {DEFAULT_FONT};
+            }}
+
+            #btn_reconnect {{
+                background: #F1F3F5;
+                color: #0066CC;
+                border: 1px solid #DEE2E6;
+                border-radius: 12px;
+                font-size: 11px;
+                font-weight: 700;
+                font-family: {DEFAULT_FONT};
+                padding: 0 10px;
+            }}
+            #btn_reconnect:hover {{
+                background: #E6F0FF;
             }}
 
             #input_label {{
@@ -169,6 +210,40 @@ class LoginWindow(QDialog):
         """)
 
     # ── 登入邏輯 ───────────────────────────────────────────
+    def _update_conn_status_ui(self):
+        from database.connection import IS_CONNECTED
+        if IS_CONNECTED:
+            self.lbl_conn_status.setText("🟢 資料庫已連線")
+            self.lbl_conn_status.setStyleSheet("color: #2ECC71; font-weight: bold; font-size: 12px;")
+            self.btn_reconnect.hide()
+        else:
+            self.lbl_conn_status.setText("🔴 未連接資料庫")
+            self.lbl_conn_status.setStyleSheet("color: #E74C3C; font-weight: bold; font-size: 12px;")
+            self.btn_reconnect.show()
+
+    def _do_reconnect(self):
+        self.btn_reconnect.setEnabled(False)
+        self.btn_reconnect.setText("連線中...")
+        QApplication.processEvents()
+        
+        import database.connection as db_conn
+        db_conn.DatabasePool.close_pool()
+        
+        # 暫時啟用連線機制以測試真實伺服器
+        db_conn.IS_CONNECTED = True
+        success = db_conn.test_connection()
+        
+        if success:
+            self._update_conn_status_ui()
+            self._show_status("")
+            QMessageBox.information(self, "連線成功", "連線伺服器成功！現在可以使用系統。")
+        else:
+            self._update_conn_status_ui()
+            self._show_status("連線失敗，請確認資料庫設定與網路")
+            
+        self.btn_reconnect.setEnabled(True)
+        self.btn_reconnect.setText("連線伺服器")
+
     def _do_login(self):
         emp_id = self.input_id.text().strip()
         password = self.input_pw.text()
@@ -179,6 +254,26 @@ class LoginWindow(QDialog):
 
         self.btn_login.setEnabled(False)
         self.btn_login.setText("驗 證 中 …")
+
+        # 1. 寫死 admin / 0 進入程式 (無論是否連線都可進入)
+        if emp_id == "admin" and password == "0":
+            user = {
+                "user_id": 999,
+                "employee_id": "admin",
+                "name": "系統管理員(模擬)",
+                "role": 3,
+                "role_label": "組長/技術主任",
+            }
+            self.login_success.emit(user)
+            self.accept()
+            return
+
+        # 2. 正常帳號登入 (僅在已連線時使用實體驗證)
+        from database.connection import IS_CONNECTED
+        if not IS_CONNECTED:
+            self._show_status("目前處於斷線狀態，僅能使用管理員(admin/0)登入")
+            self._reset_btn()
+            return
 
         try:
             user = AuthService.login(emp_id, password)

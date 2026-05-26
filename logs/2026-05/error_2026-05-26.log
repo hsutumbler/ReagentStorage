@@ -1,2 +1,9 @@
 2026-05-26 00:00:09,253 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
 2026-05-26 00:01:58,100 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-26 10:21:12,169 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-26 10:21:31,789 [INFO] (main.py:90) - ====== 系統已啟動離線測試模式 (SQLite) ======
+2026-05-26 10:28:18,213 [INFO] (main.py:87) - ====== ReagentStorage Application Started ======
+2026-05-26 10:28:43,690 [INFO] (main.py:119) - ====== 系統已啟動離線測試模式 (SQLite) ======
+2026-05-26 10:42:38,823 [INFO] (main.py:87) - ====== ReagentStorage Application Started ======
+2026-05-26 10:48:13,356 [INFO] (main.py:87) - ====== ReagentStorage Application Started ======
+2026-05-26 10:52:23,756 [INFO] (main.py:87) - ====== ReagentStorage Application Started ======
