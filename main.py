@@ -69,18 +69,7 @@ def main():
     _apply_light_palette(app)
 
     # 測試資料庫連線
-    if not test_connection():
-        err = QMessageBox()
-        err.setWindowTitle("資料庫連線失敗")
-        err.setText(
-            "無法連線至 MySQL 資料庫伺服器，請確認：\n\n"
-            "1. MySQL 伺服器是否已啟動\n"
-            "2. config.py 中的 host / user / password 是否正確\n"
-            "3. 區域網路連線是否正常"
-        )
-        err.setIcon(QMessageBox.Icon.Critical)
-        err.exec()
-        sys.exit(1)
+    test_connection()
 
     from ui.login_window import LoginWindow
     from ui.main_window import MainWindow

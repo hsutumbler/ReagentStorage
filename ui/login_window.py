@@ -43,7 +43,7 @@ class LoginWindow(QDialog):
         title.setObjectName("brand_title")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        subtitle = QLabel("醫院檢驗科 · 試劑庫存管理")
+        subtitle = QLabel("義大大昌醫院 檢驗科")
         subtitle.setObjectName("brand_subtitle")
         subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -52,7 +52,47 @@ class LoginWindow(QDialog):
         layout.addWidget(title)
         layout.addSpacing(4)
         layout.addWidget(subtitle)
-        layout.addSpacing(36)
+        layout.addSpacing(20)
+
+        # ── 資料庫連線狀態區 ──
+        status_layout = QHBoxLayout()
+        status_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        status_layout.setSpacing(6)
+
+        self.indicator_light = QLabel()
+        self.indicator_light.setFixedSize(10, 10)
+        self.indicator_light.setStyleSheet("border-radius: 5px; background-color: #E74C3C;")
+
+        self.lbl_conn_status = QLabel("偵測中...")
+        self.lbl_conn_status.setObjectName("conn_status_label")
+        self.lbl_conn_status.setStyleSheet(f"font-size: 12px; color: #636E72; font-family: {DEFAULT_FONT};")
+
+        self.btn_reconnect = QPushButton("連線伺服器")
+        self.btn_reconnect.setObjectName("btn_reconnect")
+        self.btn_reconnect.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.btn_reconnect.setFlat(True)
+        self.btn_reconnect.setStyleSheet(f"""
+            QPushButton#btn_reconnect {{
+                color: #0066CC;
+                font-size: 12px;
+                font-weight: bold;
+                border: none;
+                background: transparent;
+                padding: 0px 4px;
+                font-family: {DEFAULT_FONT};
+            }}
+            QPushButton#btn_reconnect:hover {{
+                color: #004488;
+                text-decoration: underline;
+            }}
+        """)
+
+        status_layout.addWidget(self.indicator_light)
+        status_layout.addWidget(self.lbl_conn_status)
+        status_layout.addWidget(self.btn_reconnect)
+
+        layout.addLayout(status_layout)
+        layout.addSpacing(20)
 
         # ── 工號輸入 ──
         lbl_id = QLabel("工號")
@@ -101,6 +141,10 @@ class LoginWindow(QDialog):
         self.btn_login.clicked.connect(self._do_login)
         self.input_pw.returnPressed.connect(self._do_login)
         self.input_id.returnPressed.connect(lambda: self.input_pw.setFocus())
+        self.btn_reconnect.clicked.connect(self._check_db_connection)
+
+        # 初始偵測連線狀態
+        self._check_db_connection()
 
     def _apply_style(self):
         self.setStyleSheet(f"""
@@ -168,6 +212,25 @@ class LoginWindow(QDialog):
             }}
         """)
 
+    def _check_db_connection(self):
+        self.lbl_conn_status.setText("連線中...")
+        self.btn_reconnect.setEnabled(False)
+        from PyQt6.QtCore import QCoreApplication
+        QCoreApplication.processEvents()
+
+        from database.connection import test_connection
+        is_connected = test_connection()
+        self.btn_reconnect.setEnabled(True)
+
+        if is_connected:
+            self.indicator_light.setStyleSheet("border-radius: 5px; background-color: #2ECC71;")
+            self.lbl_conn_status.setText("已連接伺服器")
+            self.lbl_conn_status.setStyleSheet("font-size: 12px; color: #2ECC71; font-weight: bold;")
+        else:
+            self.indicator_light.setStyleSheet("border-radius: 5px; background-color: #E74C3C;")
+            self.lbl_conn_status.setText("未連接伺服器")
+            self.lbl_conn_status.setStyleSheet("font-size: 12px; color: #E74C3C; font-weight: bold;")
+
     # ── 登入邏輯 ───────────────────────────────────────────
     def _do_login(self):
         emp_id = self.input_id.text().strip()
@@ -179,6 +242,13 @@ class LoginWindow(QDialog):
 
         self.btn_login.setEnabled(False)
         self.btn_login.setText("驗 證 中 …")
+
+        # ── 離線狀態防呆特判 ──
+        from database.connection import DatabasePool
+        if DatabasePool._offline_mode and not (emp_id == "admin" and password == "0"):
+            self._show_status("目前處於離線狀態，僅限系統管理員登入")
+            self._reset_btn()
+            return
 
         try:
             user = AuthService.login(emp_id, password)
