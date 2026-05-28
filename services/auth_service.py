@@ -6,9 +6,9 @@ from database.connection import DBContext
 
 ROLE_LABELS = {
     1: "一般使用者",
-    2: "試劑負責人",
-    3: "組長/技術主任",
-    4: "系統管理員",   # 權限等同組長/技術主任
+    2: "技術組長",
+    3: "技術主任",
+    4: "系統管理員",   # 權限等同技術主任
 }
 
 
@@ -56,7 +56,7 @@ class AuthService:
             "role_label":  ROLE_LABELS.get(row["role"], "未知"),
         }
 
-    # ── 使用者管理（僅組長/技術主任） ─────────────────────
+    # ── 使用者管理（僅技術主任） ─────────────────────
     @staticmethod
     def get_all_users() -> list[dict]:
         with DBContext() as (_, cursor):
@@ -102,15 +102,15 @@ class AuthService:
     # ── 權限判斷 ───────────────────────────────────────────
     @staticmethod
     def can_manage_master(user: dict) -> bool:
-        """基本檔設定（寫）：組長/技術主任。"""
+        """基本檔設定（寫）：技術主任。"""
         return user["role"] >= 3
 
     @staticmethod
     def can_adjust_stock(user: dict) -> bool:
-        """調整庫存：試劑負責人、組長/技術主任。"""
+        """調整庫存：技術組長、技術主任。"""
         return user["role"] >= 2
 
     @staticmethod
     def can_manage_users(user: dict) -> bool:
-        """使用者管理：組長/技術主任。"""
+        """使用者管理：技術主任。"""
         return user["role"] >= 3

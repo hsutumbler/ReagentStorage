@@ -79,6 +79,7 @@ def main():
     def on_login(user: dict):
         win = MainWindow(user)
         win.show()
+        MainWindow._active_windows.append(win)
 
     login.login_success.connect(on_login)
     login.show()

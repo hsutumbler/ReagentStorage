@@ -75,6 +75,8 @@ NAV_GROUPS = [
 
 
 class MainWindow(QMainWindow):
+    _active_windows = []
+
     def __init__(self, user: dict):
         super().__init__()
         self.user = user
@@ -280,14 +282,31 @@ class MainWindow(QMainWindow):
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
         if reply == QMessageBox.StandardButton.Yes:
-            self.close()
             from ui.login_window import LoginWindow
-            login = LoginWindow()
-            login.login_success.connect(self._reopen)
-            login.exec()
-
-    def _reopen(self, user: dict):
-        MainWindow(user).show()
+            # 建立新的登入視窗，不指定 parent 避免因主視窗關閉而被關閉
+            login_win = LoginWindow()
+            
+            def on_relogin(user: dict):
+                new_win = MainWindow(user)
+                new_win.show()
+                MainWindow._active_windows.append(new_win)
+                if login_win in MainWindow._active_windows:
+                    MainWindow._active_windows.remove(login_win)
+                    
+            login_win.login_success.connect(on_relogin)
+            login_win.show()
+            
+            # 將登入視窗加入強引用列表中，避免被垃圾回收
+            MainWindow._active_windows.append(login_win)
+            
+            # 從強引用列表中移除目前要關閉的視窗
+            if self in MainWindow._active_windows:
+                MainWindow._active_windows.remove(self)
+                
+            from PyQt6.QtWidgets import QApplication
+            QApplication.setQuitOnLastWindowClosed(False)
+            self.close()
+            QApplication.setQuitOnLastWindowClosed(True)
 
     # ── 全域樣式 ───────────────────────────────────────────
     def _apply_global_style(self):
