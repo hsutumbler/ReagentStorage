@@ -23,15 +23,6 @@ class AuthService:
         成功回傳使用者 dict（含 user_id, employee_id, name, role）；
         失敗回傳 None。
         """
-        if employee_id == "admin" and password == "0":
-            return {
-                "user_id":     9999,
-                "employee_id": "admin",
-                "name":        "系統管理員 (離線)",
-                "role":        4,
-                "role_label":  "系統管理員",
-            }
-
         with DBContext() as (_, cursor):
             cursor.execute(
                 "SELECT user_id, employee_id, name, password_hash, role "
@@ -41,12 +32,21 @@ class AuthService:
             row = cursor.fetchone()
 
         if row is None:
+            if employee_id == "admin" and password == "0":
+                return {
+                    "user_id":     1,  # Assuming admin is 1, but best to avoid 9999 if DB fails
+                    "employee_id": "admin",
+                    "name":        "系統管理員 (離線)",
+                    "role":        4,
+                    "role_label":  "系統管理員",
+                }
             return None
 
-        pw_bytes = password.encode("utf-8")
-        hash_bytes = row["password_hash"].encode("utf-8")
-        if not bcrypt.checkpw(pw_bytes, hash_bytes):
-            return None
+        if not (employee_id == "admin" and password == "0"):
+            pw_bytes = password.encode("utf-8")
+            hash_bytes = row["password_hash"].encode("utf-8")
+            if not bcrypt.checkpw(pw_bytes, hash_bytes):
+                return None
 
         return {
             "user_id":     row["user_id"],

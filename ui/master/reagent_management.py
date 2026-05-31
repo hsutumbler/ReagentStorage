@@ -1,10 +1,11 @@
 # ui/master/reagent_management.py — 試劑管理頁面
 
 from PyQt6.QtWidgets import (
-    QHBoxLayout, QLabel, QLineEdit, QPushButton,
+    QHBoxLayout, QVBoxLayout, QGridLayout, QLabel, QLineEdit, QPushButton,
     QDialog, QFormLayout, QComboBox, QSpinBox,
-    QDoubleSpinBox, QMessageBox, QTableWidgetItem, QFileDialog
+    QDoubleSpinBox, QMessageBox, QTableWidgetItem, QFileDialog, QMenu
 )
+from PyQt6.QtCore import Qt
 from ui.base_page import BasePage
 from database.models.reagent import ReagentModel
 from database.models.vendor import VendorModel
@@ -35,7 +36,29 @@ class ReagentManagementPage(BasePage):
             self.cb_dept.addItem(d["dept_name"], d["dept_id"])
         self.cb_dept.currentIndexChanged.connect(self._load_data)
         filter_row.addWidget(self.cb_dept)
+        
+        filter_row.addWidget(QLabel("類別："))
+        self.cb_category = QComboBox()
+        self.cb_category.addItem("全部", None)
+        for cat in ["試劑", "品管液", "校正液", "緩衝液", "其他"]:
+            self.cb_category.addItem(cat, cat)
+        self.cb_category.currentIndexChanged.connect(self._load_data)
+        filter_row.addWidget(self.cb_category)
+        
         filter_row.addStretch()
+
+        self.btn_edit = QPushButton("修改")
+        self.btn_edit.setObjectName("btn_success")
+        self.btn_edit.setEnabled(False)
+        self.btn_edit.clicked.connect(self._on_edit_clicked)
+        
+        self.btn_delete = QPushButton("刪除")
+        self.btn_delete.setObjectName("btn_danger")
+        self.btn_delete.setEnabled(False)
+        self.btn_delete.clicked.connect(self._on_delete_clicked)
+        
+        filter_row.addWidget(self.btn_edit)
+        filter_row.addWidget(self.btn_delete)
 
         btn_import = QPushButton("📥 匯入 Excel")
         btn_import.clicked.connect(self._import_excel)
@@ -46,28 +69,40 @@ class ReagentManagementPage(BasePage):
         btn_add.clicked.connect(self._add_reagent)
         filter_row.addWidget(btn_add)
         self.content_layout.addLayout(filter_row)
+        
+        # 提示文字
+        lbl_hint = QLabel("💡 提示：雙擊資料可修改，右鍵可刪除")
+        lbl_hint.setStyleSheet("color: #888888; font-size: 12px;")
+        hint_row = QHBoxLayout()
+        hint_row.addStretch()
+        hint_row.addWidget(lbl_hint)
+        self.content_layout.addLayout(hint_row)
 
-        headers = ["試劑名稱", "料號", "組別", "廠商", "廠牌",
-                   "保存溫度", "開封天數", "安全庫存", "操作"]
+        headers = ["試劑名稱", "類別", "料號", "組別", "廠商", "廠牌",
+                   "保存溫度", "開封天數", "安全庫存"]
         self.table = self.make_table(headers)
         
-        # 允許左右拉霸 (當寬度超過時)
+        # 欄位寬度最佳化，善用整頁寬度
         header = self.table.horizontalHeader()
-        # 先將所有欄位設為「依內容縮放」或「互動」，這樣總寬度才可能超過視窗
         header.setSectionResizeMode(header.ResizeMode.Interactive)
         
-        # 針對特定欄位進行優化
-        header.setSectionResizeMode(0, header.ResizeMode.Interactive) # 改為互動模式以支援自定義寬度
-        self.table.setColumnWidth(0, 120) # 加大名稱寬度
+        # 固定基本寬度的欄位
+        self.table.setColumnWidth(1, 80)   # 類別
+        self.table.setColumnWidth(2, 100)  # 料號
+        self.table.setColumnWidth(3, 100)  # 組別
+        self.table.setColumnWidth(5, 100)  # 廠牌
+        self.table.setColumnWidth(6, 120)  # 保存溫度
+        self.table.setColumnWidth(7, 80)   # 開封天數
+        self.table.setColumnWidth(8, 100)  # 安全庫存
         
-        # 其他欄位設定合適的寬度
-        widths = {1:100, 2:100, 3:100, 4:100, 5:120, 6:70, 7:100, 8:180}
-        for col, w in widths.items():
-            self.table.setColumnWidth(col, w)
-            if col == 8:
-                header.setSectionResizeMode(col, header.ResizeMode.Fixed)
-            else:
-                header.setSectionResizeMode(col, header.ResizeMode.Interactive)
+        # 試劑名稱與廠商因為字數可能較長，設為 Stretch 自動平分並填滿剩餘的頁面寬度
+        header.setSectionResizeMode(0, header.ResizeMode.Stretch)
+        header.setSectionResizeMode(4, header.ResizeMode.Stretch)
+
+        self.table.itemSelectionChanged.connect(self._on_selection_changed)
+        self.table.cellDoubleClicked.connect(self._on_double_clicked)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._show_context_menu)
 
         self.content_layout.addWidget(self.table)
 
@@ -81,9 +116,11 @@ class ReagentManagementPage(BasePage):
     def _refresh_filters(self):
         self.cb_vendor.blockSignals(True)
         self.cb_dept.blockSignals(True)
+        self.cb_category.blockSignals(True)
         
         curr_vendor = self.cb_vendor.currentData()
         curr_dept = self.cb_dept.currentData()
+        curr_category = self.cb_category.currentData()
         
         self.cb_vendor.clear()
         self.cb_vendor.addItem("全部", None)
@@ -101,8 +138,12 @@ class ReagentManagementPage(BasePage):
         idx_d = self.cb_dept.findData(curr_dept)
         if idx_d >= 0: self.cb_dept.setCurrentIndex(idx_d)
         
+        idx_c = self.cb_category.findData(curr_category)
+        if idx_c >= 0: self.cb_category.setCurrentIndex(idx_c)
+        
         self.cb_vendor.blockSignals(False)
         self.cb_dept.blockSignals(False)
+        self.cb_category.blockSignals(False)
 
     def _import_excel(self):
         """匯入試劑主檔 Excel。"""
@@ -143,12 +184,13 @@ class ReagentManagementPage(BasePage):
         try:
             vendor_id = self.cb_vendor.currentData()
             dept_id = self.cb_dept.currentData()
+            category = self.cb_category.currentData()
         except RuntimeError:
             return
             
-        reagents = ReagentModel.get_all()
-        if vendor_id:
-            reagents = [r for r in reagents if r["vendor_id"] == vendor_id]
+        reagents = ReagentModel.get_all(vendor_id=vendor_id, category=category)
+        if dept_id:
+            reagents = [r for r in reagents if r["dept_id"] == dept_id]
         if dept_id:
             reagents = [r for r in reagents if r["dept_id"] == dept_id]
 
@@ -159,31 +201,58 @@ class ReagentManagementPage(BasePage):
             safety_display = f"{float(rg.get('safety_stock') or 0):.1f} {stock_unit}"
             
             for c_idx, val in enumerate([
-                rg["reagent_name"], rg["item_number"] or "", rg["dept_name"],
+                rg["reagent_name"], rg.get("category", "試劑"), rg["item_number"] or "", rg["dept_name"],
                 rg["vendor_name"], rg["brand"] or "", rg["storage_temp"] or "",
                 rg["open_days"] or "", safety_display
             ]):
-                self.table.setItem(r, c_idx, QTableWidgetItem(str(val)))
-            # 操作按鈕容器
-            from PyQt6.QtWidgets import QWidget, QHBoxLayout
-            action_widget = QWidget()
-            action_widget.setStyleSheet("background: transparent;")
-            action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(10, 0, 10, 0) # 增加左右邊距
-            action_layout.setSpacing(12) # 增加按鈕間距
+                item = QTableWidgetItem(str(val))
+                if c_idx == 0:
+                    item.setData(Qt.ItemDataRole.UserRole, rg)
+                self.table.setItem(r, c_idx, item)
 
-            btn_edit = self.make_table_btn("修改", "primary")
-            btn_edit.clicked.connect(lambda _, rid=rg["reagent_id"]: self._edit_reagent(rid))
-            
-            btn_del = self.make_table_btn("刪除", "danger")
-            btn_del.clicked.connect(lambda _, rid=rg["reagent_id"], rname=rg["reagent_name"]: self._delete_reagent(rid, rname))
+        self._on_selection_changed()
 
-            action_layout.addStretch()
-            action_layout.addWidget(btn_edit)
-            action_layout.addWidget(btn_del)
-            action_layout.addStretch()
+    def _on_selection_changed(self):
+        has_selection = len(self.table.selectedItems()) > 0
+        self.btn_edit.setEnabled(has_selection)
+        self.btn_delete.setEnabled(has_selection)
 
-            self.table.setCellWidget(r, 8, action_widget)
+    def _get_selected_reagent(self):
+        row = self.table.currentRow()
+        if row >= 0:
+            item = self.table.item(row, 0)
+            if item:
+                return item.data(Qt.ItemDataRole.UserRole)
+        return None
+
+    def _on_edit_clicked(self):
+        data = self._get_selected_reagent()
+        if data:
+            self._edit_reagent(data["reagent_id"])
+
+    def _on_delete_clicked(self):
+        data = self._get_selected_reagent()
+        if data:
+            self._delete_reagent(data["reagent_id"], data["reagent_name"])
+
+    def _on_double_clicked(self, row, col):
+        data = self._get_selected_reagent()
+        if data:
+            self._edit_reagent(data["reagent_id"])
+
+    def _show_context_menu(self, pos):
+        item = self.table.itemAt(pos)
+        if not item: return
+        
+        menu = QMenu(self)
+        action_edit = menu.addAction("修改")
+        action_delete = menu.addAction("刪除")
+        
+        action = menu.exec(self.table.viewport().mapToGlobal(pos))
+        if action == action_edit:
+            self._on_edit_clicked()
+        elif action == action_delete:
+            self._on_delete_clicked()
 
     def _add_reagent(self):
         dlg = ReagentDialog(self)
@@ -224,14 +293,26 @@ class ReagentDialog(QDialog):
     def __init__(self, parent, reagent: dict = None):
         super().__init__(parent)
         self.setWindowTitle("試劑資料")
-        self.setFixedWidth(440)
+        self.setFixedWidth(680)
         self.setStyleSheet(parent.styleSheet())
-        form = QFormLayout(self)
-        form.setSpacing(10)
-        form.setContentsMargins(20, 20, 20, 20)
+        
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(20, 20, 20, 20)
+        main_layout.setSpacing(20)
+
+        grid = QGridLayout()
+        grid.setSpacing(12)
+        grid.setColumnStretch(1, 1)
+        grid.setColumnStretch(3, 1)
 
         self.f_name = QLineEdit(reagent["reagent_name"] if reagent else "")
         self.f_item = QLineEdit(reagent["item_number"] or "" if reagent else "")
+
+        self.cb_category = QComboBox()
+        self.cb_category.addItems(["試劑", "品管液", "校正液", "緩衝液", "其他"])
+        if reagent and reagent.get("category"):
+            idx = self.cb_category.findText(reagent["category"])
+            if idx >= 0: self.cb_category.setCurrentIndex(idx)
 
         self.cb_dept = QComboBox()
         depts = ReagentModel.get_all_departments()
@@ -282,6 +363,7 @@ class ReagentDialog(QDialog):
         self.f_safety.setValue(float(reagent["safety_stock"] or 0) if reagent else 0)
         self.lbl_safety_unit = QLabel("")
         safety_row = QHBoxLayout()
+        safety_row.setContentsMargins(0, 0, 0, 0)
         safety_row.addWidget(self.f_safety)
         safety_row.addWidget(self.lbl_safety_unit)
 
@@ -297,16 +379,37 @@ class ReagentDialog(QDialog):
         self.cb_unit.currentIndexChanged.connect(self._update_safety_unit_label)
         self._update_safety_unit_label()
 
-        form.addRow("試劑名稱 *", self.f_name)
-        form.addRow("料號", self.f_item)
-        form.addRow("組別 *", self.cb_dept)
-        form.addRow("廠商 *", self.cb_vendor)
-        form.addRow("廠牌", self.f_brand)
-        form.addRow("保存溫度", self.f_temp)
-        form.addRow("開封天數（天）", self.f_open_days)
-        form.addRow("單位換算設定", self.cb_unit)
-        form.addRow("安全庫存（入庫單位）", safety_row)
-        form.addRow("預設列印標籤", self.cb_label_type)
+        # ── 兩排版面配置 ──
+        # Row 0
+        grid.addWidget(QLabel("試劑名稱 *"), 0, 0)
+        grid.addWidget(self.f_name, 0, 1)
+        grid.addWidget(QLabel("類別 *"), 0, 2)
+        grid.addWidget(self.cb_category, 0, 3)
+        # Row 1
+        grid.addWidget(QLabel("料號"), 1, 0)
+        grid.addWidget(self.f_item, 1, 1)
+        grid.addWidget(QLabel("組別 *"), 1, 2)
+        grid.addWidget(self.cb_dept, 1, 3)
+        # Row 2
+        grid.addWidget(QLabel("廠商 *"), 2, 0)
+        grid.addWidget(self.cb_vendor, 2, 1)
+        grid.addWidget(QLabel("廠牌"), 2, 2)
+        grid.addWidget(self.f_brand, 2, 3)
+        # Row 3
+        grid.addWidget(QLabel("保存溫度"), 3, 0)
+        grid.addWidget(self.f_temp, 3, 1)
+        grid.addWidget(QLabel("開封天數（天）"), 3, 2)
+        grid.addWidget(self.f_open_days, 3, 3)
+        # Row 4
+        grid.addWidget(QLabel("單位換算設定"), 4, 0)
+        grid.addWidget(self.cb_unit, 4, 1)
+        grid.addWidget(QLabel("安全庫存 (入庫)"), 4, 2)
+        grid.addLayout(safety_row, 4, 3)
+        # Row 5
+        grid.addWidget(QLabel("預設列印標籤"), 5, 0)
+        grid.addWidget(self.cb_label_type, 5, 1)
+        
+        main_layout.addLayout(grid)
 
         btn_row = QHBoxLayout()
         btn_ok = QPushButton("儲存")
@@ -314,9 +417,12 @@ class ReagentDialog(QDialog):
         btn_cancel = QPushButton("取消")
         btn_ok.clicked.connect(self._validate)
         btn_cancel.clicked.connect(self.reject)
+        
+        btn_row.addStretch()
         btn_row.addWidget(btn_ok)
         btn_row.addWidget(btn_cancel)
-        form.addRow(btn_row)
+        
+        main_layout.addLayout(btn_row)
 
     def _update_safety_unit_label(self):
         """切換換算設定時，動態更新安全庫存旁邊的單位名稱。"""
@@ -344,6 +450,7 @@ class ReagentDialog(QDialog):
     def get_data(self) -> dict:
         return {
             "reagent_name": self.f_name.text().strip(),
+            "category":     self.cb_category.currentText(),
             "item_number":  self.f_item.text().strip() or None,
             "dept_id":      self.cb_dept.currentData(),
             "storage_temp": self.f_temp.currentText(),

@@ -1,8 +1,9 @@
 from PyQt6.QtWidgets import (
     QHBoxLayout, QVBoxLayout, QLabel, QLineEdit,
     QPushButton, QDialog, QFormLayout, QDoubleSpinBox,
-    QMessageBox, QTableWidgetItem, QCompleter, QFileDialog
+    QMessageBox, QTableWidgetItem, QCompleter, QFileDialog, QMenu
 )
+from PyQt6.QtCore import Qt
 from ui.base_page import BasePage
 from database.models.reagent import ReagentModel
 from database.connection import DBContext
@@ -19,11 +20,30 @@ class UnitManagementPage(BasePage):
         btn_add = QPushButton("＋ 新增單位換算")
         btn_add.setObjectName("btn_primary")
         btn_add.clicked.connect(self._add_unit)
+        
+        self.btn_edit = QPushButton("修改")
+        self.btn_edit.setObjectName("btn_success")
+        self.btn_edit.setEnabled(False)
+        self.btn_edit.clicked.connect(self._on_edit_clicked)
+        
+        self.btn_delete = QPushButton("刪除")
+        self.btn_delete.setObjectName("btn_danger")
+        self.btn_delete.setEnabled(False)
+        self.btn_delete.clicked.connect(self._on_delete_clicked)
+        
         btn_refresh = QPushButton("重新整理")
         btn_refresh.clicked.connect(self._load_data)
+        
         toolbar.addWidget(btn_add)
+        toolbar.addWidget(self.btn_edit)
+        toolbar.addWidget(self.btn_delete)
         toolbar.addWidget(btn_refresh)
+        
+        lbl_hint = QLabel("💡 提示：雙擊資料可修改，右鍵可刪除")
+        lbl_hint.setStyleSheet("color: #888888; font-size: 12px;")
         toolbar.addStretch()
+        toolbar.addWidget(lbl_hint)
+        
         self.content_layout.addLayout(toolbar)
 
         # 說明
@@ -33,13 +53,14 @@ class UnitManagementPage(BasePage):
         self.content_layout.addWidget(hint)
 
         headers = ["換算名稱", "入庫單位", "盤點單位", "出庫單位",
-                   "入庫→盤點", "入庫→出庫", "操作"]
+                   "入庫→盤點", "入庫→出庫"]
         self.table = self.make_table(headers)
-        # 此欄固定寬度，容納兩個按鈕
-        self.table.horizontalHeader().setSectionResizeMode(
-            6, self.table.horizontalHeader().ResizeMode.Fixed
-        )
-        self.table.setColumnWidth(6, 180)
+        
+        self.table.itemSelectionChanged.connect(self._on_selection_changed)
+        self.table.cellDoubleClicked.connect(self._on_double_clicked)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._show_context_menu)
+        
         self.content_layout.addWidget(self.table)
 
         self._load_data()
@@ -61,27 +82,54 @@ class UnitManagementPage(BasePage):
                 u["unit_name"], u["stock_unit"], u["count_unit"], u["issue_unit"],
                 f"{float(u['stock_to_count']):.1f}", f"{float(total_ratio):.1f}",
             ]):
-                self.table.setItem(r, c_idx, QTableWidgetItem(str(val)))
-            # 操作按鈕容器
-            from PyQt6.QtWidgets import QWidget, QHBoxLayout
-            action_widget = QWidget()
-            action_widget.setStyleSheet("background: transparent;")
-            action_layout = QHBoxLayout(action_widget)
-            action_layout.setContentsMargins(10, 0, 10, 0)
-            action_layout.setSpacing(12)
+                item = QTableWidgetItem(str(val))
+                if c_idx == 0:
+                    item.setData(Qt.ItemDataRole.UserRole, u)
+                self.table.setItem(r, c_idx, item)
+                
+        self._on_selection_changed()
 
-            btn_edit = self.make_table_btn("修改", "primary")
-            btn_edit.clicked.connect(lambda _, uid=u["unit_id"]: self._edit_unit(uid))
-            
-            btn_del = self.make_table_btn("刪除", "danger")
-            btn_del.clicked.connect(lambda _, uid=u["unit_id"], uname=u["unit_name"]: self._delete_unit(uid, uname))
+    def _on_selection_changed(self):
+        has_selection = len(self.table.selectedItems()) > 0
+        self.btn_edit.setEnabled(has_selection)
+        self.btn_delete.setEnabled(has_selection)
 
-            action_layout.addStretch()
-            action_layout.addWidget(btn_edit)
-            action_layout.addWidget(btn_del)
-            action_layout.addStretch()
+    def _get_selected_unit(self):
+        row = self.table.currentRow()
+        if row >= 0:
+            item = self.table.item(row, 0)
+            if item:
+                return item.data(Qt.ItemDataRole.UserRole)
+        return None
 
-            self.table.setCellWidget(r, 6, action_widget)
+    def _on_edit_clicked(self):
+        data = self._get_selected_unit()
+        if data:
+            self._edit_unit(data["unit_id"])
+
+    def _on_delete_clicked(self):
+        data = self._get_selected_unit()
+        if data:
+            self._delete_unit(data["unit_id"], data["unit_name"])
+
+    def _on_double_clicked(self, row, col):
+        data = self._get_selected_unit()
+        if data:
+            self._edit_unit(data["unit_id"])
+
+    def _show_context_menu(self, pos):
+        item = self.table.itemAt(pos)
+        if not item: return
+        
+        menu = QMenu(self)
+        action_edit = menu.addAction("修改")
+        action_delete = menu.addAction("刪除")
+        
+        action = menu.exec(self.table.viewport().mapToGlobal(pos))
+        if action == action_edit:
+            self._on_edit_clicked()
+        elif action == action_delete:
+            self._on_delete_clicked()
 
     def _add_unit(self):
         dlg = UnitDialog(self)

@@ -6,7 +6,7 @@ from database.connection import DBContext
 class ReagentModel:
 
     @staticmethod
-    def get_all(active_only=True, vendor_id=None) -> list[dict]:
+    def get_all(active_only=True, vendor_id=None, category=None) -> list[dict]:
         sql = """
             SELECT DISTINCT r.*, r.safety_stock as reagent_safety_stock, 
                    v.vendor_name, d.dept_name, u.unit_name,
@@ -24,6 +24,9 @@ class ReagentModel:
         if vendor_id:
             sql += " AND r.vendor_id=%s"
             params.append(vendor_id)
+        if category:
+            sql += " AND r.category=%s"
+            params.append(category)
             
         sql += " ORDER BY r.reagent_name"
         with DBContext() as (_, c):
@@ -76,32 +79,32 @@ class ReagentModel:
 
     @staticmethod
     def create(reagent_name, item_number, dept_id, storage_temp,
-               open_days, vendor_id, brand, unit_id=None, safety_stock=0, default_label_type=1) -> int:
+               open_days, vendor_id, brand, unit_id=None, safety_stock=0, default_label_type=1, category='試劑') -> int:
         with DBContext() as (_, c):
             c.execute(
                 "INSERT INTO reagents "
                 "(reagent_name, item_number, dept_id, storage_temp, "
-                " open_days, vendor_id, brand, unit_id, safety_stock, default_label_type) "
-                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+                " open_days, vendor_id, brand, unit_id, safety_stock, default_label_type, category) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (reagent_name, item_number, dept_id, storage_temp,
-                 open_days, vendor_id, brand, unit_id, safety_stock, default_label_type),
+                 open_days, vendor_id, brand, unit_id, safety_stock, default_label_type, category),
             )
             return c.lastrowid
 
     @staticmethod
     def update(reagent_id, reagent_name, item_number, dept_id, storage_temp,
-               open_days, vendor_id, brand, unit_id=None, safety_stock=0, default_label_type=1) -> None:
+               open_days, vendor_id, brand, unit_id=None, safety_stock=0, default_label_type=1, category='試劑') -> None:
         with DBContext() as (_, c):
             sql = """
                 UPDATE reagents SET 
                     reagent_name=%s, item_number=%s, dept_id=%s, 
                     storage_temp=%s, open_days=%s, vendor_id=%s, 
-                    brand=%s, unit_id=%s, safety_stock=%s, default_label_type=%s
+                    brand=%s, unit_id=%s, safety_stock=%s, default_label_type=%s, category=%s
                 WHERE reagent_id=%s
             """
             c.execute(sql, (
                 reagent_name, item_number, dept_id, storage_temp,
-                open_days, vendor_id, brand, unit_id, safety_stock, default_label_type, reagent_id
+                open_days, vendor_id, brand, unit_id, safety_stock, default_label_type, category, reagent_id
             ))
 
     @staticmethod

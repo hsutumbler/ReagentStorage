@@ -181,7 +181,7 @@ class InventoryModel:
             return c.fetchall()
 
     @staticmethod
-    def trace_query(vendor_id=None, dept_id=None, reagent_id=None,
+    def trace_query(vendor_id=None, dept_id=None, reagent_id=None, category=None,
                     date_from=None, date_to=None, rid=None, lot_number=None,
                     status=None, issue_from=None, issue_to=None) -> list[dict]:
         """庫存追溯查詢（含過往出入庫記錄）。"""
@@ -204,6 +204,8 @@ class InventoryModel:
             sql += " AND r.dept_id=%s"; params.append(dept_id)
         if reagent_id:
             sql += " AND i.reagent_id=%s"; params.append(reagent_id)
+        if category:
+            sql += " AND r.category=%s"; params.append(category)
         if date_from:
             sql += " AND i.received_date>=%s"; params.append(date_from)
         if date_to:

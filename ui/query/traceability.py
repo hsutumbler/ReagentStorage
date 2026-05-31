@@ -99,33 +99,55 @@ class TraceabilityPage(BasePage):
         self.cb_vendor.currentIndexChanged.connect(self._update_reagents)
         row1.addWidget(self.cb_vendor)
 
+        row1.addWidget(QLabel("組別："))
+        self.cb_dept = QComboBox()
+        self.cb_dept.addItem("全部", None)
+        for d in ReagentModel.get_all_departments():
+            self.cb_dept.addItem(d["dept_name"], d["dept_id"])
+        self.cb_dept.currentIndexChanged.connect(self._update_reagents)
+        row1.addWidget(self.cb_dept)
+
         row1.addWidget(QLabel("試劑名稱："))
         self.cb_reagent = QComboBox()
         self.cb_reagent.setFixedWidth(160)
         row1.addWidget(self.cb_reagent)
+        
+        row1.addWidget(QLabel("類別："))
+        self.cb_category = QComboBox()
+        self.cb_category.addItem("全部", None)
+        self.cb_category.addItems(["試劑", "品管液", "校正液", "緩衝液", "其他"])
+        self.cb_category.currentIndexChanged.connect(self._update_reagents)
+        row1.addWidget(self.cb_category)
+
+        row1.addStretch()
+        filter_area.addLayout(row1)
         self._update_reagents() # 初始化
 
-        row1.addWidget(QLabel("狀態："))
+        row1_5 = QHBoxLayout()
+        row1_5.setSpacing(10)
+
+        row1_5.addWidget(QLabel("狀態："))
         self.cb_status = QComboBox()
         self.cb_status.addItem("全部", None)
         self.cb_status.addItem("在庫", 0)
         self.cb_status.addItem("已出庫", 1)
         self.cb_status.addItem("已調整刪除", 2)
-        row1.addWidget(self.cb_status)
-        
-        row1.addWidget(QLabel("RID："))
-        self.f_rid = QLineEdit()
-        self.f_rid.setPlaceholderText("搜尋")
-        self.f_rid.setFixedWidth(100)
-        row1.addWidget(self.f_rid)
+        row1_5.addWidget(self.cb_status)
 
-        row1.addWidget(QLabel("批號："))
+        row1_5.addWidget(QLabel("批號："))
         self.f_lot = QLineEdit()
         self.f_lot.setPlaceholderText("搜尋")
-        self.f_lot.setFixedWidth(100)
-        row1.addWidget(self.f_lot)
-        row1.addStretch()
-        filter_area.addLayout(row1)
+        self.f_lot.setFixedWidth(120)
+        row1_5.addWidget(self.f_lot)
+
+        row1_5.addWidget(QLabel("RID："))
+        self.f_rid = QLineEdit()
+        self.f_rid.setPlaceholderText("搜尋")
+        self.f_rid.setFixedWidth(120)
+        row1_5.addWidget(self.f_rid)
+
+        row1_5.addStretch()
+        filter_area.addLayout(row1_5)
 
         # 第二排：日期篩選 (獨立一排以確保寬度充足)
         row2 = QHBoxLayout()
@@ -200,23 +222,36 @@ class TraceabilityPage(BasePage):
     def _update_reagents(self):
         """根據廠商連動更新試劑清單。"""
         vendor_id = self.cb_vendor.currentData()
+        dept_id = getattr(self, "cb_dept", None)
+        dept_id = dept_id.currentData() if dept_id else None
+        
+        category_combo = getattr(self, "cb_category", None)
+        category = category_combo.currentText() if category_combo and category_combo.currentIndex() > 0 else None
+
         self.cb_reagent.clear()
         self.cb_reagent.addItem("全部", None)
         
-        reagents = ReagentModel.get_all(vendor_id=vendor_id)
+        reagents = ReagentModel.get_all(vendor_id=vendor_id, category=category)
         for r in reagents:
+            if dept_id and r.get("dept_id") != dept_id:
+                continue
             self.cb_reagent.addItem(r["reagent_name"], r["reagent_id"])
 
     def _search(self):
         issue_from = self.f_issue_from.date().toPyDate() if self.chk_issue_date.isChecked() else None
         issue_to = self.f_issue_to.date().toPyDate() if self.chk_issue_date.isChecked() else None
         
+        category_combo = getattr(self, "cb_category", None)
+        category = category_combo.currentText() if category_combo and category_combo.currentIndex() > 0 else None
+
         rows = InventoryModel.trace_query(
             vendor_id=self.cb_vendor.currentData(),
+            dept_id=self.cb_dept.currentData(),
             reagent_id=self.cb_reagent.currentData(),
+            category=category,
             status=self.cb_status.currentData(),
-            rid=self.f_rid.text().strip(),
             lot_number=self.f_lot.text().strip(),
+            rid=getattr(self, "f_rid", None).text().strip() if getattr(self, "f_rid", None) else None,
             date_from=self.f_from.date().toPyDate(),
             date_to=self.f_to.date().toPyDate(),
             issue_from=issue_from,

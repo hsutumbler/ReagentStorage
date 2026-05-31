@@ -1,0 +1,505 @@
+2026-05-31 00:02:10,447 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-31 00:09:38,734 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-31 00:18:49,005 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-31 00:50:17,913 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-31 00:51:32,161 [CRITICAL] (logger.py:136) - 未攔截的全域例外異常 (Uncaught Exception):
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hsutumbler/Project/ReagentStorage/ui/receiving/manual_receive.py", line 226, in _do_receive
+    InventoryModel.insert(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rid=rid, reagent_id=reagent_id, lot_number=lot_number,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        expiry_date=expiry, received_date=date.today(),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        received_by=self.user["user_id"], receive_mode=mode,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/hsutumbler/Project/ReagentStorage/database/models/inventory.py", line 13, in insert
+    c.execute(
+    ~~~~~~~~~^
+        "INSERT INTO inventory "
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+         received_by, receive_mode, po_id),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/opentelemetry/context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.IntegrityError: 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+2026-05-31 00:51:33,607 [CRITICAL] (logger.py:136) - 未攔截的全域例外異常 (Uncaught Exception):
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hsutumbler/Project/ReagentStorage/ui/receiving/manual_receive.py", line 226, in _do_receive
+    InventoryModel.insert(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rid=rid, reagent_id=reagent_id, lot_number=lot_number,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        expiry_date=expiry, received_date=date.today(),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        received_by=self.user["user_id"], receive_mode=mode,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/hsutumbler/Project/ReagentStorage/database/models/inventory.py", line 13, in insert
+    c.execute(
+    ~~~~~~~~~^
+        "INSERT INTO inventory "
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+         received_by, receive_mode, po_id),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/opentelemetry/context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.IntegrityError: 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+2026-05-31 00:51:35,119 [CRITICAL] (logger.py:136) - 未攔截的全域例外異常 (Uncaught Exception):
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hsutumbler/Project/ReagentStorage/ui/receiving/manual_receive.py", line 226, in _do_receive
+    InventoryModel.insert(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rid=rid, reagent_id=reagent_id, lot_number=lot_number,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        expiry_date=expiry, received_date=date.today(),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        received_by=self.user["user_id"], receive_mode=mode,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/hsutumbler/Project/ReagentStorage/database/models/inventory.py", line 13, in insert
+    c.execute(
+    ~~~~~~~~~^
+        "INSERT INTO inventory "
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+         received_by, receive_mode, po_id),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/opentelemetry/context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.IntegrityError: 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+2026-05-31 00:51:36,323 [CRITICAL] (logger.py:136) - 未攔截的全域例外異常 (Uncaught Exception):
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hsutumbler/Project/ReagentStorage/ui/receiving/manual_receive.py", line 226, in _do_receive
+    InventoryModel.insert(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rid=rid, reagent_id=reagent_id, lot_number=lot_number,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        expiry_date=expiry, received_date=date.today(),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        received_by=self.user["user_id"], receive_mode=mode,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/hsutumbler/Project/ReagentStorage/database/models/inventory.py", line 13, in insert
+    c.execute(
+    ~~~~~~~~~^
+        "INSERT INTO inventory "
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+         received_by, receive_mode, po_id),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/opentelemetry/context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.IntegrityError: 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+2026-05-31 00:51:36,573 [CRITICAL] (logger.py:136) - 未攔截的全域例外異常 (Uncaught Exception):
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hsutumbler/Project/ReagentStorage/ui/receiving/manual_receive.py", line 226, in _do_receive
+    InventoryModel.insert(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rid=rid, reagent_id=reagent_id, lot_number=lot_number,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        expiry_date=expiry, received_date=date.today(),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        received_by=self.user["user_id"], receive_mode=mode,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/hsutumbler/Project/ReagentStorage/database/models/inventory.py", line 13, in insert
+    c.execute(
+    ~~~~~~~~~^
+        "INSERT INTO inventory "
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+         received_by, receive_mode, po_id),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/opentelemetry/context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.IntegrityError: 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+2026-05-31 00:51:36,803 [CRITICAL] (logger.py:136) - 未攔截的全域例外異常 (Uncaught Exception):
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hsutumbler/Project/ReagentStorage/ui/receiving/manual_receive.py", line 226, in _do_receive
+    InventoryModel.insert(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rid=rid, reagent_id=reagent_id, lot_number=lot_number,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        expiry_date=expiry, received_date=date.today(),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        received_by=self.user["user_id"], receive_mode=mode,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/hsutumbler/Project/ReagentStorage/database/models/inventory.py", line 13, in insert
+    c.execute(
+    ~~~~~~~~~^
+        "INSERT INTO inventory "
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+         received_by, receive_mode, po_id),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/opentelemetry/context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.IntegrityError: 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+2026-05-31 00:51:44,223 [CRITICAL] (logger.py:136) - 未攔截的全域例外異常 (Uncaught Exception):
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hsutumbler/Project/ReagentStorage/ui/receiving/manual_receive.py", line 226, in _do_receive
+    InventoryModel.insert(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rid=rid, reagent_id=reagent_id, lot_number=lot_number,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        expiry_date=expiry, received_date=date.today(),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        received_by=self.user["user_id"], receive_mode=mode,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/hsutumbler/Project/ReagentStorage/database/models/inventory.py", line 13, in insert
+    c.execute(
+    ~~~~~~~~~^
+        "INSERT INTO inventory "
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+         received_by, receive_mode, po_id),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/opentelemetry/context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.IntegrityError: 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+2026-05-31 00:51:44,454 [CRITICAL] (logger.py:136) - 未攔截的全域例外異常 (Uncaught Exception):
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hsutumbler/Project/ReagentStorage/ui/receiving/manual_receive.py", line 226, in _do_receive
+    InventoryModel.insert(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rid=rid, reagent_id=reagent_id, lot_number=lot_number,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        expiry_date=expiry, received_date=date.today(),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        received_by=self.user["user_id"], receive_mode=mode,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/hsutumbler/Project/ReagentStorage/database/models/inventory.py", line 13, in insert
+    c.execute(
+    ~~~~~~~~~^
+        "INSERT INTO inventory "
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+         received_by, receive_mode, po_id),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/opentelemetry/context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.IntegrityError: 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+2026-05-31 00:51:48,357 [CRITICAL] (logger.py:136) - 未攔截的全域例外異常 (Uncaught Exception):
+Traceback (most recent call last):
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+    ~~~~~~~~~~~~~~~~~~^
+        query,
+        ^^^^^^
+    ...<3 lines>...
+        query_attrs=self.query_attrs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+_mysql_connector.MySQLInterfaceError: Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/Users/hsutumbler/Project/ReagentStorage/ui/receiving/manual_receive.py", line 226, in _do_receive
+    InventoryModel.insert(
+    ~~~~~~~~~~~~~~~~~~~~~^
+        rid=rid, reagent_id=reagent_id, lot_number=lot_number,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        expiry_date=expiry, received_date=date.today(),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        received_by=self.user["user_id"], receive_mode=mode,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Users/hsutumbler/Project/ReagentStorage/database/models/inventory.py", line 13, in insert
+    c.execute(
+    ~~~~~~~~~^
+        "INSERT INTO inventory "
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+         received_by, receive_mode, po_id),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        self._stmt_partition["mappable_stmt"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        raw_as_string=self._raw_as_string,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/opentelemetry/context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+  File "/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/mysql/connector/connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+        err.errno, msg=err.msg, sqlstate=err.sqlstate
+    ) from err
+mysql.connector.errors.IntegrityError: 1452 (23000): Cannot add or update a child row: a foreign key constraint fails (`reagent_storage`.`inventory`, CONSTRAINT `inventory_ibfk_2` FOREIGN KEY (`received_by`) REFERENCES `users` (`user_id`))
+2026-05-31 00:55:59,592 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-31 10:36:54,564 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-31 10:42:51,333 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-31 11:00:09,307 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-31 11:27:05,937 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
+2026-05-31 11:43:10,431 [INFO] (main.py:58) - ====== ReagentStorage Application Started ======
